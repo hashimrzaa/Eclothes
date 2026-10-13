@@ -36,7 +36,7 @@
     <div class="container-page pt-5">
         <x-breadcrumbs :items="$crumbs" />
 
-        <div class="mt-5 grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-12">
+        <div class="mt-5 grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-12">
             @include('store.partials.gallery')
 
             {{-- Buy box --}}

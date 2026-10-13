@@ -89,14 +89,14 @@
 
             <div class="min-w-0">
                 {{-- Toolbar --}}
-                <div class="flex items-center gap-2">
+                <div class="flex min-w-0 items-center gap-2">
                     <button type="button" class="chip shrink-0 border-night bg-night text-white hover:bg-ink-2 lg:hidden" @click="sheet = true" aria-haspopup="dialog">
                         <x-lucide-sliders-horizontal class="size-4" aria-hidden="true" />Filters
                         <span x-show="active > 0" x-cloak x-text="active" class="grid size-5 place-items-center rounded-full bg-lime text-[0.6875rem] font-bold text-night"></span>
                     </button>
-                    <div class="ml-auto flex items-center gap-2">
-                        <label for="sort" class="text-sm text-muted">Sort by</label>
-                        <select id="sort" name="sort" form="filters" class="field field-sm h-9 w-auto rounded-full pr-8 font-medium" @change="$refs.form.requestSubmit()">
+                    <div class="ml-auto flex min-w-0 items-center gap-2">
+                        <label for="sort" class="shrink-0 text-sm text-muted max-[400px]:sr-only">Sort by</label>
+                        <select id="sort" name="sort" form="filters" class="field field-sm h-9 w-auto max-w-full min-w-0 rounded-full pr-8 font-medium" @change="$refs.form.requestSubmit()">
                             @foreach ($sorts as $key => $label)
                                 <option value="{{ $key }}" @selected($sort === $key)>{{ $label }}</option>
                             @endforeach

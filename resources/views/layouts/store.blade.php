@@ -47,19 +47,19 @@
         </div>
 
         {{-- Main bar --}}
-        <div class="container-page flex h-16 items-center gap-2 lg:h-[4.5rem] lg:gap-5">
+        <div class="container-page flex h-16 min-w-0 items-center gap-1.5 sm:gap-2 lg:h-[4.5rem] lg:gap-5">
             <button type="button" class="icon-btn -ml-2 lg:hidden" @click="menu = true" aria-label="Open menu"><x-lucide-menu class="size-6" aria-hidden="true" /></button>
 
-            <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2.5" aria-label="{{ config('store.name') }} home">
-                <span class="grid size-10 place-items-center rounded-xl bg-night font-display text-xl font-extrabold text-lime">{{ mb_substr(config('store.name'), 0, 1) }}</span>
-                <span class="font-display text-[1.375rem] leading-none font-extrabold tracking-tight">{{ config('store.name') }}</span>
+            <a href="{{ route('home') }}" class="flex min-w-0 items-center gap-2 sm:shrink-0 sm:gap-2.5" aria-label="{{ config('store.name') }} home">
+                <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-night font-display text-xl font-extrabold text-lime">{{ mb_substr(config('store.name'), 0, 1) }}</span>
+                <span class="truncate font-display text-[1.375rem] leading-none font-extrabold tracking-tight max-[300px]:hidden">{{ config('store.name') }}</span>
             </a>
 
             <div class="ml-auto hidden flex-1 md:block lg:ml-6">
                 @include('partials.search-box', ['sid' => 'd'])
             </div>
 
-            <nav class="ml-auto flex items-center gap-1 md:ml-0 lg:gap-2" aria-label="Account and cart">
+            <nav class="ml-auto flex shrink-0 items-center gap-1 md:ml-0 lg:gap-2" aria-label="Account and cart">
                 <a href="{{ $accountUrl }}" class="hidden h-12 items-center gap-2.5 rounded-full px-3 transition-colors hover:bg-sunken sm:flex">
                     <span class="grid size-9 place-items-center rounded-full bg-sunken text-ink-2"><x-lucide-user class="size-[1.125rem]" aria-hidden="true" /></span>
                     <span class="hidden text-left leading-tight xl:block">
