@@ -278,7 +278,7 @@ Alpine.data('showcase', (total) => ({
         const d = this.offset(i);
         const a = Math.abs(d);
         return {
-            transform: `translateX(calc(${d} * var(--step))) translateZ(${a * -8}rem) rotateY(${d * -30}deg)`,
+            transform: `translateX(calc(${d} * var(--step))) translateZ(calc(${a} * var(--depth))) rotateY(${d * -30}deg)`,
             opacity: a > 2 ? 0 : 1 - a * 0.22,
             zIndex: 10 - a,
             pointerEvents: a > 2 ? 'none' : 'auto',
@@ -655,9 +655,17 @@ document.addEventListener('submit', (event) => {
    the background and only the page body is swapped.
    ========================================================================== */
 
+/* The showcase fills the screen under the header, so it needs the header's real height. */
+const measureHeader = () => {
+    const header = document.querySelector('[data-header]');
+    if (header) document.documentElement.style.setProperty('--header-h', header.offsetHeight + 'px');
+};
+window.addEventListener('resize', measureHeader);
+
 let started = false;
 const boot = () => {
     started = true;
+    measureHeader();
     startMotion();
 };
 document.addEventListener('turbo:render', boot);

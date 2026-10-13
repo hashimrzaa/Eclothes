@@ -373,19 +373,34 @@ button[aria-busy='true'] {
     filter: blur(70px);
 }
 
-/* Homepage showcase: 3D carousel */
+/*
+ | Homepage showcase: 3D carousel that fills exactly one screen under the header, so the next
+ | section starts with the first scroll. Everything inside is sized from the room available:
+ | cards from the stage they sit in (container units), type from the window height (--u).
+ */
+.showcase-wrap {
+    display: grid;
+    grid-template-rows: minmax(11rem, 1fr) auto;
+    row-gap: 0.25rem;
+    /* screen − header − bottom tab bar */
+    height: max(33rem, calc(100svh - var(--header-h, 10rem) - 3.75rem));
+    padding-block: 0.5rem 1.25rem;
+}
 .showcase-stage {
-    --step: 9.5rem;
+    min-height: 0;
+    container-type: size;
     perspective: 70rem;
     transform-style: preserve-3d;
 }
 .showcase-card {
+    --card-w: min(68cqh, 58cqw);
+    --step: calc(var(--card-w) * 0.74);
+    --depth: calc(var(--card-w) * -0.42);
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 13rem;
-    aspect-ratio: 4 / 5;
-    margin: -8.125rem 0 0 -6.5rem;
+    inset: 0;
+    width: var(--card-w);
+    height: calc(var(--card-w) * 1.25);
+    margin: auto;
     overflow: hidden;
     border-radius: 1.5rem;
     background: var(--color-sunken);
@@ -397,13 +412,39 @@ button[aria-busy='true'] {
 .showcase-card[aria-hidden='false'] {
     box-shadow: 0 3rem 6rem -1.75rem rgb(0 0 0 / 0.9), 0 0 0 2px var(--color-lime);
 }
-@media (min-width: 640px) {
-    .showcase-stage { --step: 11.5rem; }
-    .showcase-card { width: 15rem; margin: -9.375rem 0 0 -7.5rem; }
-}
 @media (min-width: 1024px) {
-    .showcase-stage { --step: 14.5rem; mask-image: linear-gradient(to right, transparent 0, #000 22%); }
-    .showcase-card { width: 19.5rem; margin: -12.1875rem 0 0 -9.75rem; border-radius: 1.75rem; }
+    .showcase {
+        /* One fortieth of the space under the header, capped so tall screens do not get giant type. */
+        --u: clamp(0.5rem, calc((100svh - var(--header-h, 9.75rem)) / 40), 1.05rem);
+    }
+    .showcase-wrap {
+        grid-template-rows: none;
+        grid-template-columns: 0.82fr 1.18fr;
+        align-items: center;
+        column-gap: 2.5rem;
+        height: max(calc(var(--u) * 40), calc(100svh - var(--header-h, 9.75rem)));
+        padding-block: calc(var(--u) * 2);
+    }
+    .showcase-stage {
+        height: calc(var(--u) * 34);
+        mask-image: linear-gradient(to right, transparent 0, #000 22%);
+    }
+    .showcase-card {
+        --card-w: min(72cqh, 44cqw);
+        border-radius: calc(var(--u) * 1.75);
+    }
+    .showcase .sc-eyebrow { font-size: calc(var(--u) * 0.75); }
+    .showcase .sc-title { margin-top: calc(var(--u) * 0.75); font-size: calc(var(--u) * 4.4); }
+    .showcase .sc-sub { margin-top: calc(var(--u) * 0.75); font-size: var(--u); }
+    .showcase .sc-card { max-width: calc(var(--u) * 28); margin-top: calc(var(--u) * 1.5); padding: calc(var(--u) * 1.25); border-radius: calc(var(--u) * 1.5); }
+    .showcase .sc-brand { font-size: calc(var(--u) * 0.75); }
+    .showcase .sc-name { margin-top: calc(var(--u) * 0.5); font-size: calc(var(--u) * 1.75); }
+    .showcase .sc-price { margin-top: calc(var(--u) * 0.5); }
+    .showcase .sc-amount { font-size: calc(var(--u) * 1.9); }
+    .showcase .sc-actions { margin-top: var(--u); }
+    .showcase .sc-actions .btn { height: calc(var(--u) * 2.75); padding-inline: calc(var(--u) * 1.25); font-size: calc(var(--u) * 0.95); }
+    .showcase .sc-controls { margin-top: calc(var(--u) * 1.25); }
+    .showcase .sc-controls > button { width: calc(var(--u) * 2.75); height: calc(var(--u) * 2.75); }
 }
 
 /* Marquee */
