@@ -50,6 +50,27 @@ class ProductController extends Controller
         ]);
     }
 
+    /**
+     * QR code for a product, generated on demand. Scanning it opens the product page,
+     * where the shopper can pick options and add it to the cart.
+     */
+    public function qr(Request $request, string $slug)
+    {
+        $product = Product::whereIn('status', Product::LISTED)->where('slug', $slug)->firstOrFail();
+
+        $renderer = new \BaconQrCode\Renderer\ImageRenderer(
+            new \BaconQrCode\Renderer\RendererStyle\RendererStyle(480, 2),
+            new \BaconQrCode\Renderer\Image\SvgImageBackEnd,
+        );
+        $svg = (new \BaconQrCode\Writer($renderer))->writeString(url($product->url), 'UTF-8', \BaconQrCode\Common\ErrorCorrectionLevel::M());
+
+        return response($svg, 200, array_filter([
+            'Content-Type' => 'image/svg+xml',
+            'Cache-Control' => 'public, max-age=86400',
+            'Content-Disposition' => $request->boolean('download') ? 'attachment; filename="'.$product->sku.'-qr.svg"' : null,
+        ]));
+    }
+
     public function review(Request $request, Product $product)
     {
         $data = $request->validate([

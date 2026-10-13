@@ -1,10 +1,10 @@
-@props(['product', 'index' => 0, 'eager' => false])
+@props(['product', 'index' => 0, 'eager' => false, 'full' => false])
 @php
-    $url = $product->image_urls[$index] ?? null;
+    $url = ($full ? $product->image_urls : $product->thumb_urls)[$index] ?? null;
     $hue = ($product->hue + $index * 24) % 360;
 @endphp
 @if ($url)
-    <img src="{{ $url }}" alt="{{ $product->title }}" @if (! $eager) loading="lazy" decoding="async" @endif
+    <img src="{{ $url }}" alt="{{ $product->title }}" width="560" height="700" @if (! $eager) loading="lazy" decoding="async" @endif
         {{ $attributes->class('size-full object-cover') }}>
 @else
     {{-- Neutral placeholder tile until supplier photos are uploaded in the admin panel. --}}

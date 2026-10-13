@@ -21,7 +21,7 @@
     $colours = $product->colours ?? [];
     $sizes = $product->sizes ?? [];
     $showSizeGuide = $sizes && in_array($product->filter_set, ['fashion', 'kids'], true);
-    $waText = "Hi, I have a question about {$product->title} ({$product->sku}) — {$product->url}";
+    $waText = "Hi, I have a question about {$product->title} ({$product->sku}) — ".url($product->url);
 @endphp
 
 @section('content')
@@ -29,43 +29,7 @@
         <x-breadcrumbs :items="$crumbs" />
 
         <div class="mt-5 grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-12">
-            {{-- Gallery: images + optional short video / reel --}}
-            <div x-data="{ slide: 0 }" class="lg:sticky lg:top-36 lg:self-start">
-                <div class="flex flex-col-reverse gap-3 sm:flex-row">
-                    <div class="no-scrollbar flex gap-2.5 overflow-x-auto sm:w-[4.5rem] sm:shrink-0 sm:flex-col sm:overflow-visible" role="tablist" aria-label="Product images">
-                        @for ($i = 0; $i < $slides; $i++)
-                            <button type="button" role="tab" @click="slide = {{ $i }}" :aria-selected="(slide === {{ $i }}).toString()" aria-label="Image {{ $i + 1 }}"
-                                class="aspect-square w-16 shrink-0 overflow-hidden rounded-control border-2 transition-colors sm:w-full" :class="slide === {{ $i }} ? 'border-primary' : 'border-transparent hover:border-line-strong'">
-                                <x-product-image :product="$product" :index="$i" />
-                            </button>
-                        @endfor
-                        @if ($product->video_url)
-                            <button type="button" role="tab" @click="slide = 'video'" :aria-selected="(slide === 'video').toString()" aria-label="Product video"
-                                class="grid aspect-square w-16 shrink-0 place-items-center rounded-control border-2 bg-ink text-white sm:w-full" :class="slide === 'video' ? 'border-primary' : 'border-transparent'">
-                                <x-lucide-play class="size-5 fill-current" aria-hidden="true" />
-                            </button>
-                        @endif
-                    </div>
-                    <div data-tilt class="tilt-glare relative aspect-[4/5] flex-1 overflow-hidden rounded-card bg-sunken">
-                        @for ($i = 0; $i < $slides; $i++)
-                            <div x-show="slide === {{ $i }}" @if ($i > 0) x-cloak @endif class="size-full" x-transition.opacity.duration.200ms>
-                                <x-product-image :product="$product" :index="$i" :eager="$i === 0" />
-                            </div>
-                        @endfor
-                        @if ($product->video_url)
-                            <template x-if="slide === 'video'">
-                                <video src="{{ $product->video_url }}" class="size-full bg-ink object-contain" controls playsinline autoplay muted></video>
-                            </template>
-                        @endif
-                        @if ($product->on_sale)
-                            <span class="badge absolute top-3 left-3 bg-accent text-white">−{{ $product->discount_pct }}%</span>
-                        @endif
-                        @unless ($images)
-                            <p class="absolute inset-x-0 bottom-3 text-center text-xs text-muted">Product photos coming soon</p>
-                        @endunless
-                    </div>
-                </div>
-            </div>
+            @include('store.partials.gallery')
 
             {{-- Buy box --}}
             <div>
@@ -135,7 +99,21 @@
                         <fieldset>
                             <div class="flex items-center justify-between">
                                 <legend class="text-sm font-semibold">Size<span class="ml-2 font-normal text-muted" x-text="size ?? 'Select a size'"></span></legend>
-                                @if ($showSizeGuide)
+                                {{-- QR code: scan to open this product on a phone --}}
+    <x-modal name="qr" title="Product QR code" size="max-w-sm">
+        <div class="text-center" x-data="{ src: @js(route('product.qr', $product->slug, false)), link: @js(url($product->url)), name: @js($product->title), price: @js(money($product->price)), file: @js($product->sku.'-qr.png') }">
+            <div class="mx-auto w-56 rounded-2xl border border-line bg-white p-3"><img :src="src" alt="QR code that opens {{ $product->title }}" width="480" height="480" class="size-full" loading="lazy"></div>
+            <p class="mt-4 line-clamp-2 font-semibold">{{ $product->title }}</p>
+            <p class="text-sm text-muted">{{ money($product->price) }} · SKU {{ $product->sku }}</p>
+            <p class="mt-2 text-[0.8125rem] text-muted">Scan with a phone camera to open this product and add it to the cart.</p>
+            <div class="mt-5 grid grid-cols-2 gap-2.5">
+                <button type="button" class="btn btn-primary" @click="qrCard(src, name, price, link, file, 'share')"><x-lucide-share-2 class="size-[1.125rem]" aria-hidden="true" />Share</button>
+                <button type="button" class="btn btn-outline" @click="qrCard(src, name, price, link, file, 'download')"><x-lucide-download class="size-[1.125rem]" aria-hidden="true" />Download</button>
+            </div>
+        </div>
+    </x-modal>
+
+    @if ($showSizeGuide)
                                     <button type="button" class="link inline-flex items-center gap-1.5 text-sm" @click="$dispatch('open-modal', 'size-guide')"><x-lucide-ruler class="size-4" aria-hidden="true" />Size guide</button>
                                 @endif
                             </div>
@@ -174,10 +152,11 @@
                 </form>
 
                 <div class="mt-4 flex gap-2">
-                    <button type="button" class="btn btn-ghost btn-sm" x-data="wishlistButton('{{ route('wishlist.toggle', $product) }}', {{ $inWishlist ? 'true' : 'false' }})" @click="toggle" :aria-pressed="active.toString()">
+                    <button type="button" class="btn btn-ghost btn-sm" x-data="wishlistButton('{{ route('wishlist.toggle', $product, false) }}', {{ $product->id }})" @click="toggle" :aria-pressed="active.toString()">
                         <x-lucide-heart class="size-[1.125rem]" ::class="active && 'fill-accent text-accent'" aria-hidden="true" /><span x-text="active ? 'Saved to wishlist' : 'Add to wishlist'"></span>
                     </button>
-                    <button type="button" class="btn btn-ghost btn-sm" onclick="shareProduct(@js($product->title), @js($product->url))"><x-lucide-share-2 class="size-[1.125rem]" aria-hidden="true" />Share</button>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="shareProduct(@js($product->title), @js(url($product->url)))"><x-lucide-share-2 class="size-[1.125rem]" aria-hidden="true" />Share</button>
+                    <button type="button" class="btn btn-ghost btn-sm" x-data @click="$dispatch('open-modal', 'qr')" aria-haspopup="dialog"><x-lucide-qr-code class="size-[1.125rem]" aria-hidden="true" />QR code</button>
                 </div>
 
                 {{-- Delivery, COD and returns at the point of decision --}}

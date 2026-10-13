@@ -48,20 +48,31 @@ class HomeController extends Controller
                     ->filter(fn ($p) => ! empty($p->images))->pipe(fn ($all) => $all->unique('department')->concat($all)->unique('id'))
                     ->take(max(5, min($section->item_limit, 12)))->values(),
                 'rail' => $products($section->source, $section->item_limit),
+                'deals' => collect([
+                    ['Under Rs. 499', 'Budget finds', 'banknote', 'Small prices, useful things.', 'deals-trending/deals/under-rs-499', fn ($q) => $q->where('price', '<=', 499)],
+                    ['Under Rs. 999', 'Everyday value', 'tag', 'Popular picks that stay under a thousand.', 'deals-trending/deals/under-rs-999', fn ($q) => $q->where('price', '<=', 999)->where('price', '>', 499)],
+                    ['Flash deals', 'Limited time', 'zap', 'Marked down for a short while.', 'deals-trending/deals/flash-deals', fn ($q) => $q->where('is_flash', true)],
+                    ['Bundle deals', 'Save more', 'boxes', 'Packs and sets that cost less together.', 'deals-trending/deals/bundle-deals', fn ($q) => $q->where('is_bundle', true)],
+                    ['Limited stock', 'Almost gone', 'flame', 'Only a few pieces left of each.', 'deals-trending/discovery/limited-stock', fn ($q) => $q->where('stock_qty', '<=', config('store.low_stock_at'))],
+                ])->map(fn ($deal) => [
+                    'label' => $deal[0], 'kicker' => $deal[1], 'icon' => $deal[2], 'blurb' => $deal[3], 'url' => route('category', $deal[4], false),
+                    'products' => $deal[5]($pool())->orderByDesc('sold_count')->limit(4)->get(),
+                    'count' => $deal[5]($pool())->count(),
+                ])->filter(fn ($deal) => $deal['products']->count() >= 2)->values(),
                 'reviews' => Review::where('status', 'approved')->where('rating', '>=', 4)
                     ->whereHas('product', fn ($p) => $p->general())->with('product')->latest()->limit($section->item_limit ?: 6)->get(),
                 default => collect(),
             };
 
             return $section;
-        })->reject(fn ($section) => in_array($section->kind, ['showcase', 'rail', 'reviews'], true) && $section->items->isEmpty())->values();
+        })->reject(fn ($section) => in_array($section->kind, ['showcase', 'rail', 'reviews', 'deals'], true) && $section->items->isEmpty())->values();
 
         return view('store.home', [
             'sections' => $sections,
             'departments' => $departments,
             'deptPhotos' => $departments->where('kind', 'normal')->mapWithKeys(fn ($dept) => [
                 $dept->slug => Product::general()->where('department', $dept->slug)->orderByDesc('sold_count')->limit(12)->get()
-                    ->map(fn ($p) => $p->image_urls[0] ?? null)->filter()->first(),
+                    ->map(fn ($p) => $p->thumb_urls[0] ?? null)->filter()->first(),
             ]),
         ]);
     }

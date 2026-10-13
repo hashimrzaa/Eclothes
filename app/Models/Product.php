@@ -163,15 +163,58 @@ class Product extends Model
 
     public function getUrlAttribute(): string
     {
-        return route('product.show', $this->slug);
+        return route('product.show', $this->slug, false);
     }
 
     /** Uploaded paths are stored relative to the public disk; full URLs are kept as-is. */
     public function getImageUrlsAttribute(): array
     {
         return collect($this->images ?? [])
-            ->map(fn ($img) => Str::startsWith($img, ['http://', 'https://', '/']) ? $img : asset('storage/'.$img))
+            ->map(fn ($img) => Str::startsWith($img, ['http://', 'https://', '/']) ? $img : '/storage/'.$img)
             ->all();
+    }
+
+    /** Small versions for cards and lists; falls back to the full photo when no thumbnail exists. */
+    public function getThumbUrlsAttribute(): array
+    {
+        return collect($this->images ?? [])->map(function ($img) {
+            if (Str::startsWith($img, ['http://', 'https://', '/'])) {
+                return $img;
+            }
+            $thumb = self::thumbPath($img);
+
+            return '/storage/'.(is_file(storage_path('app/public/'.$thumb)) ? $thumb : $img);
+        })->all();
+    }
+
+    public static function thumbPath(string $image): string
+    {
+        return dirname($image).'/thumbs/'.pathinfo($image, PATHINFO_FILENAME).'.jpg';
+    }
+
+    /** Write a 560×700 JPEG next to an uploaded photo so listings do not download full-size images. */
+    public static function makeThumb(string $image): bool
+    {
+        $source = storage_path('app/public/'.$image);
+        $data = @file_get_contents($source);
+        $src = $data ? @imagecreatefromstring($data) : false;
+        if (! $src) {
+            return false;
+        }
+        [$w, $h] = [imagesx($src), imagesy($src)];
+        [$tw, $th] = [560, 700];
+        $scale = max($tw / $w, $th / $h);
+        [$cw, $ch] = [(int) round($tw / $scale), (int) round($th / $scale)];
+        $dst = imagecreatetruecolor($tw, $th);
+        imagefill($dst, 0, 0, imagecolorallocate($dst, 255, 255, 255));
+        imagecopyresampled($dst, $src, 0, 0, (int) (($w - $cw) / 2), (int) (($h - $ch) / 2), $tw, $th, $cw, $ch);
+        $target = storage_path('app/public/'.self::thumbPath($image));
+        @mkdir(dirname($target), 0775, true);
+        $ok = imagejpeg($dst, $target, 78);
+        imagedestroy($src);
+        imagedestroy($dst);
+
+        return $ok;
     }
 
     /** Stable hue for the placeholder tile when no photo is uploaded yet. */

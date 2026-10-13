@@ -131,6 +131,19 @@
                     <x-field label="Supplier notes" name="supplier_notes" rows="2" :value="$product->supplier_notes" />
                 </section>
 
+                @if ($product->exists && in_array($product->status, \App\Models\Product::LISTED, true))
+                    <section class="card p-5 sm:p-6">
+                        <h2 class="text-base font-bold">QR code</h2>
+                        <div class="mt-4 flex items-center gap-4">
+                            <img src="{{ route('product.qr', $product->slug) }}" alt="QR code for {{ $product->title }}" width="480" height="480" class="size-28 rounded-xl border border-line bg-white p-1.5">
+                            <div class="min-w-0 text-sm">
+                                <p class="text-muted">Generated automatically. Scanning it opens this product's page in the store — print it on tags, packaging or posters.</p>
+                                <a href="{{ route('product.qr', [$product->slug, 'download' => 1]) }}" data-turbo="false" class="btn btn-outline btn-sm mt-3"><x-lucide-download class="size-4" aria-hidden="true" />Download</a>
+                            </div>
+                        </div>
+                    </section>
+                @endif
+
                 <div class="sticky bottom-4 flex gap-3">
                     <button class="btn btn-primary btn-lg flex-1 shadow-e2">{{ $product->exists ? 'Save changes' : 'Create product' }}</button>
                 </div>

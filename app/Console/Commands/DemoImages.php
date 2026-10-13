@@ -109,6 +109,7 @@ class DemoImages extends Command
 
             $file = 'products/'.$product->sku.'.jpg';
             Storage::disk('public')->put($file, $body);
+            Product::makeThumb($file);
             $product->forceFill(['images' => [$file]])->saveQuietly();
             $done++;
             $this->line("{$product->sku}  {$query}");

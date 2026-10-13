@@ -197,4 +197,17 @@ class StoreTest extends TestCase
         $this->get('/admin/settings')->assertOk();
         $this->get('/admin/homepage')->assertOk();
     }
+
+    public function test_every_listed_product_has_a_qr_code_pointing_at_its_page(): void
+    {
+        $product = $this->sellable();
+
+        $response = $this->get('/p/'.$product->slug.'/qr.svg')->assertOk()->assertHeader('Content-Type', 'image/svg+xml');
+        $this->assertStringContainsString('<svg', $response->getContent());
+        $this->get('/p/'.$product->slug.'/qr.svg?download=1')->assertHeader('Content-Disposition', 'attachment; filename="'.$product->sku.'-qr.svg"');
+        $this->get($product->url)->assertSee('QR code');
+
+        $draft = Product::where('status', 'draft')->first();
+        $this->get('/p/'.$draft->slug.'/qr.svg')->assertNotFound();
+    }
 }

@@ -20,6 +20,7 @@ Route::get('/c/{path}', [CatalogController::class, 'category'])->where('path', '
 Route::post('/age-confirm', [AccountController::class, 'ageConfirm'])->name('age.confirm');
 
 Route::get('/p/{slug}', [ProductController::class, 'show'])->name('product.show');
+Route::get('/p/{slug}/qr.svg', [ProductController::class, 'qr'])->name('product.qr');
 Route::post('/p/{product}/reviews', [ProductController::class, 'review'])->name('product.review')->middleware('throttle:forms');
 
 Route::get('/cart', [CartController::class, 'index'])->name('cart');

@@ -13,8 +13,20 @@ class Category extends Model
 
     protected static function booted(): void
     {
-        static::saved(fn () => Cache::forget('nav.tree'));
-        static::deleted(fn () => Cache::forget('nav.tree'));
+        static::saved(fn () => self::flushNav());
+        static::deleted(fn () => self::flushNav());
+    }
+
+    /** The menu tree and its rendered HTML are cached; any category change starts a new version. */
+    public static function flushNav(): void
+    {
+        Cache::forget('nav.tree');
+        Cache::forever('nav.version', (string) microtime(true));
+    }
+
+    public static function navVersion(): string
+    {
+        return (string) Cache::get('nav.version', '0');
     }
 
     public function parent()
@@ -34,7 +46,7 @@ class Category extends Model
 
     public function getUrlAttribute(): string
     {
-        return route('category', $this->path);
+        return route('category', $this->path, false);
     }
 
     public function getDepartmentSlugAttribute(): string

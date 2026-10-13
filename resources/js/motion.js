@@ -80,7 +80,7 @@ function smoothScroll() {
     window.__lenis = lenis;
 }
 
-/* ---------- Header: leaves as soon as you scroll down, returns only at the very top ---------- */
+/* ---------- Header: leaves on the way down, slides back the moment its own space comes into view ---------- */
 
 function header() {
     const el = document.querySelector('[data-header]');
@@ -91,8 +91,10 @@ function header() {
         onUpdate(self) {
             const y = self.scroll();
             const busy = el.querySelector('[aria-expanded="true"]') || el.contains(document.activeElement);
-            if (y <= 8 || busy) el.classList.remove('is-hidden');
-            else if (self.direction === 1 && y > 140) el.classList.add('is-hidden');
+            // Its slot at the top of the page is as tall as the header: never leave that slot showing empty.
+            const slot = el.offsetHeight;
+            if (y <= slot || busy) el.classList.remove('is-hidden');
+            else if (self.direction === 1 && y > slot + 60) el.classList.add('is-hidden');
         },
     });
     return () => el.classList.remove('is-hidden');

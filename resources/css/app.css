@@ -63,12 +63,12 @@
 @layer base {
     /*
      | Desktop scales as one piece: every size is in rem and the root size follows the window width,
-     | so a 1280px laptop and a 1920px monitor show the same composition (16px at 1440px wide).
+     | so a laptop, a 4K monitor and a wall display all show the same composition (16px at 1440px wide).
      | Phones and tablets keep a fixed 16px root and use their own layouts instead.
      */
     @media (min-width: 1024px) {
         html {
-            font-size: clamp(13.5px, 1.1111vw, 26px);
+            font-size: max(13.5px, 1.1111vw);
         }
     }
     html {
@@ -285,6 +285,16 @@ button[aria-busy='true'] {
     pointer-events: none;
 }
 
+.stars {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 5em;
+    height: 1em;
+    background: linear-gradient(90deg, #f59e0b var(--p, 0%), var(--color-line-strong) var(--p, 0%));
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'/%3E%3C/svg%3E") 0 0 / 1em 1em repeat-x;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'/%3E%3C/svg%3E") 0 0 / 1em 1em repeat-x;
+}
+
 .skeleton {
     background: linear-gradient(100deg, var(--color-sunken) 30%, var(--color-line) 50%, var(--color-sunken) 70%);
     background-size: 200% 100%;
@@ -486,4 +496,193 @@ button[aria-busy='true'] {
     .display {
         @apply font-display leading-[0.95] font-extrabold tracking-[-0.03em];
     }
+}
+
+/* ---------- Catalogue filter panel ---------- */
+.filter-panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-surface);
+}
+@media (max-width: 1023.98px) {
+    /* Phones and tablets: a sheet that slides up over the results */
+    .filter-panel {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 50;
+        max-height: 88dvh;
+        border-radius: 1.75rem 1.75rem 0 0;
+        box-shadow: var(--shadow-e3);
+        transform: translateY(100%);
+        visibility: hidden;
+        transition: transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s 320ms;
+    }
+    .filter-panel.is-open {
+        transform: none;
+        visibility: visible;
+        transition-delay: 0s;
+    }
+}
+@media (min-width: 768px) and (max-width: 1023.98px) {
+    /* Tablets: a side drawer instead of a full-width sheet */
+    .filter-panel {
+        top: 0;
+        left: auto;
+        width: 24rem;
+        max-height: none;
+        border-radius: 1.75rem 0 0 1.75rem;
+        transform: translateX(100%);
+    }
+}
+@media (min-width: 1024px) {
+    .filter-panel {
+        position: sticky;
+        top: 1rem;
+        max-height: calc(100vh - 2rem);
+        overflow: hidden;
+        border: 1px solid var(--color-line);
+        border-radius: 1.25rem;
+    }
+}
+.filter-group {
+    min-width: 0;
+    margin: 0;
+    padding: 0 1.25rem 0.875rem;
+    border-top: 1px solid var(--color-line);
+}
+.filter-group > legend {
+    float: left;
+    width: 100%;
+    padding: 0;
+}
+.filter-group > legend + * {
+    clear: both;
+}
+.filter-group > legend > button {
+    display: flex;
+    width: 100%;
+    min-height: 2.875rem;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: left;
+}
+.check-row {
+    display: flex;
+    min-height: 2.25rem;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0 -0.375rem;
+    padding: 0 0.375rem;
+    border-radius: 0.5rem;
+    color: var(--color-ink-2);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 120ms ease;
+}
+.check-row:hover {
+    background: var(--color-sunken);
+}
+.check-box {
+    display: grid;
+    flex-shrink: 0;
+    width: 1.125rem;
+    height: 1.125rem;
+    place-items: center;
+    border: 1.5px solid var(--color-line-strong);
+    border-radius: 0.3125rem;
+    color: transparent;
+    transition: background-color 120ms ease, border-color 120ms ease;
+}
+.check-row input:checked + .check-box {
+    border-color: var(--color-night);
+    background: var(--color-night);
+    color: #fff;
+}
+.check-row input:focus-visible + .check-box {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+@media (max-width: 1023.98px) {
+    .check-row { min-height: 2.75rem; font-size: 0.9375rem; }
+}
+
+/* Toggle switch */
+.switch {
+    position: relative;
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    background: var(--color-line-strong);
+    cursor: pointer;
+    transition: background-color 180ms ease;
+    appearance: none;
+    -webkit-appearance: none;
+}
+.switch::before {
+    content: '';
+    position: absolute;
+    top: 0.1875rem;
+    left: 0.1875rem;
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 9999px;
+    background: #fff;
+    box-shadow: var(--shadow-e1);
+    transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.switch:checked {
+    background: var(--color-primary);
+}
+.switch:checked::before {
+    transform: translateX(1rem);
+}
+
+/* ---------- Deal explorer ---------- */
+.deal-progress {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: var(--color-lime);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+}
+.deal-progress.is-running {
+    animation: deal-progress 5s linear forwards;
+}
+@keyframes deal-progress {
+    to { transform: scaleX(1); }
+}
+
+/* ---------- Product viewer and camera try-on ---------- */
+.viewer-btn {
+    display: grid;
+    flex-shrink: 0;
+    width: 2.75rem;
+    height: 2.75rem;
+    place-items: center;
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.12);
+    color: #fff;
+    transition: background-color 150ms ease;
+}
+.viewer-btn:hover {
+    background: rgb(255 255 255 / 0.22);
+}
+.viewer-btn:disabled {
+    opacity: 0.35;
+}
+.range-single {
+    display: block;
+    width: 100%;
+    height: 1.5rem;
+    background: none;
+    accent-color: var(--color-lime);
+    cursor: pointer;
 }

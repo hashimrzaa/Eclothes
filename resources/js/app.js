@@ -56,7 +56,7 @@ Alpine.store('cart', {
             const res = await fetch(form.action, {
                 method: 'POST',
                 body: new FormData(form, submitter),
-                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf(), 'X-Requested-With': 'XMLHttpRequest' },
             });
             if (res.status === 419) return window.location.reload();
             const data = await res.json();
@@ -193,9 +193,12 @@ Alpine.data('searchBox', (endpoint, initial = '') => ({
     },
 }));
 
+/* Saved product ids for this visitor; product cards read it so their HTML can be shared between visitors. */
+Alpine.store('wish', { ids: [] });
+
 /* Wishlist heart — toggles without a page reload and keeps the header count in sync. */
-Alpine.data('wishlistButton', (url, initial) => ({
-    active: initial,
+Alpine.data('wishlistButton', (url, id) => ({
+    active: Alpine.store('wish').ids.includes(id),
     busy: false,
     async toggle() {
         if (this.busy) return;
@@ -209,6 +212,8 @@ Alpine.data('wishlistButton', (url, initial) => ({
             if (!res.ok) throw new Error();
             const data = await res.json();
             this.active = data.active;
+            const wish = Alpine.store('wish');
+            wish.ids = data.active ? [...wish.ids, id] : wish.ids.filter((v) => v !== id);
             window.dispatchEvent(new CustomEvent('wishlist-count', { detail: data.count }));
             toast(data.active ? 'Saved to your wishlist.' : 'Removed from your wishlist.');
         } catch {
@@ -295,6 +300,265 @@ Alpine.data('showcase', (total) => ({
     },
 }));
 
+/*
+ | Product gallery: hover magnifier, full-screen viewer (zoom, drag, pinch) and a live camera
+ | try-on where the product photo is held over the camera picture.
+ */
+const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+Alpine.data('gallery', (images) => ({
+    images,
+    slide: 0,
+    // hover magnifier
+    zoomed: false,
+    ox: 50,
+    oy: 50,
+    // full-screen viewer
+    box: false,
+    scale: 1,
+    x: 0,
+    y: 0,
+    drag: null,
+    pinch: null,
+    pointers: new Map(),
+    // camera try-on
+    cam: false,
+    stream: null,
+    facing: 'user',
+    camError: '',
+    tx: 0,
+    ty: 0,
+    size: 55,
+    opacity: 85,
+    tdrag: null,
+
+    init() {
+        const lock = () => document.body.classList.toggle('overflow-hidden', this.box || this.cam);
+        this.$watch('box', lock);
+        this.$watch('cam', lock);
+    },
+    destroy() {
+        this.stopCam();
+        document.body.classList.remove('overflow-hidden');
+    },
+    get current() {
+        return typeof this.slide === 'number' ? this.images[this.slide] ?? null : null;
+    },
+
+    hover(event) {
+        if (!finePointer || !this.current) return;
+        const r = event.currentTarget.getBoundingClientRect();
+        this.ox = (((event.clientX - r.left) / r.width) * 100).toFixed(1);
+        this.oy = (((event.clientY - r.top) / r.height) * 100).toFixed(1);
+        this.zoomed = true;
+    },
+
+    open() {
+        if (!this.current) return;
+        this.zoomed = false;
+        this.reset();
+        this.box = true;
+    },
+    reset() {
+        this.scale = 1;
+        this.x = 0;
+        this.y = 0;
+    },
+    zoom(factor) {
+        this.scale = clamp(this.scale * factor, 1, 5);
+        if (this.scale === 1) this.x = this.y = 0;
+    },
+    step(n) {
+        this.slide = ((typeof this.slide === 'number' ? this.slide : 0) + n + this.images.length) % this.images.length;
+        this.reset();
+    },
+    spread() {
+        const [a, b] = [...this.pointers.values()];
+        return Math.hypot(a.x - b.x, a.y - b.y);
+    },
+    pdown(event) {
+        event.currentTarget.setPointerCapture(event.pointerId);
+        this.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        if (this.pointers.size === 2) this.pinch = { distance: this.spread(), scale: this.scale };
+        else this.drag = { x: event.clientX - this.x, y: event.clientY - this.y };
+    },
+    pmove(event) {
+        if (!this.pointers.has(event.pointerId)) return;
+        this.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        if (this.pointers.size === 2 && this.pinch) {
+            this.scale = clamp(this.pinch.scale * (this.spread() / this.pinch.distance), 1, 5);
+        } else if (this.drag && this.scale > 1) {
+            this.x = event.clientX - this.drag.x;
+            this.y = event.clientY - this.drag.y;
+        }
+    },
+    pup(event) {
+        this.pointers.delete(event.pointerId);
+        this.pinch = null;
+        if (!this.pointers.size) this.drag = null;
+        if (this.scale === 1) this.x = this.y = 0;
+    },
+
+    async startCam() {
+        if (!this.current) return;
+        this.cam = true;
+        this.camError = '';
+        this.stream?.getTracks().forEach((track) => track.stop());
+        this.stream = null;
+        if (!navigator.mediaDevices?.getUserMedia) {
+            this.camError = 'The camera only works on a secure (https) address or on this computer.';
+            return;
+        }
+        try {
+            this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: this.facing, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+            this.$refs.video.srcObject = this.stream;
+            await this.$refs.video.play();
+        } catch {
+            this.camError = 'We could not open your camera. Allow camera access in your browser and try again.';
+        }
+    },
+    stopCam() {
+        this.stream?.getTracks().forEach((track) => track.stop());
+        this.stream = null;
+        if (this.$refs.video) this.$refs.video.srcObject = null;
+        this.cam = false;
+    },
+    flip() {
+        this.facing = this.facing === 'user' ? 'environment' : 'user';
+        this.startCam();
+    },
+    tdown(event) {
+        event.currentTarget.setPointerCapture(event.pointerId);
+        this.tdrag = { x: event.clientX - this.tx, y: event.clientY - this.ty };
+    },
+    tmove(event) {
+        if (!this.tdrag) return;
+        this.tx = event.clientX - this.tdrag.x;
+        this.ty = event.clientY - this.tdrag.y;
+    },
+    /** Save what is on screen: the camera picture with the product photo where the shopper placed it. */
+    snap() {
+        const video = this.$refs.video;
+        const overlay = this.$refs.overlay;
+        const stage = this.$refs.camStage.getBoundingClientRect();
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(stage.width * 2);
+        canvas.height = Math.round(stage.height * 2);
+        const ctx = canvas.getContext('2d');
+        ctx.scale(2, 2);
+
+        // Camera picture, cropped the same way as on screen (cover) and mirrored for the front camera.
+        const k = Math.max(stage.width / video.videoWidth, stage.height / video.videoHeight);
+        const w = video.videoWidth * k;
+        const h = video.videoHeight * k;
+        ctx.save();
+        if (this.facing === 'user') {
+            ctx.translate(stage.width, 0);
+            ctx.scale(-1, 1);
+        }
+        ctx.drawImage(video, (stage.width - w) / 2, (stage.height - h) / 2, w, h);
+        ctx.restore();
+
+        const o = overlay.getBoundingClientRect();
+        ctx.globalAlpha = this.opacity / 100;
+        try {
+            ctx.drawImage(overlay, o.left - stage.left, o.top - stage.top, o.width, o.height);
+            canvas.toBlob((blob) => {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'try-on.jpg';
+                link.click();
+                setTimeout(() => URL.revokeObjectURL(link.href), 2000);
+                toast('Photo saved to your downloads.');
+            }, 'image/jpeg', 0.9);
+        } catch {
+            toast('This photo cannot be saved from the camera view.', true);
+        }
+    },
+}));
+
+/* Deal explorer on the homepage: tabs that rotate by themselves until the shopper takes over. */
+Alpine.data('dealTabs', (total) => ({
+    tab: 0,
+    total,
+    paused: false,
+    timer: null,
+
+    init() {
+        this.play();
+    },
+    destroy() {
+        clearInterval(this.timer);
+    },
+    play() {
+        clearInterval(this.timer);
+        if (this.total < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        this.timer = setInterval(() => {
+            if (!this.paused && document.visibilityState === 'visible') this.tab = (this.tab + 1) % this.total;
+        }, 5000);
+    },
+    pick(i) {
+        if (i === this.tab) return;
+        this.tab = i;
+        this.play();
+    },
+}));
+
+/*
+ | Catalogue filters. The filter panel is not re-rendered when results refresh, so the open
+ | sections, the scroll position and what the shopper ticked all stay exactly as they were.
+ */
+Alpine.data('catalogFilters', (total, active) => ({
+    sheet: false,
+    total,
+    active,
+    timer: null,
+    onLoad: null,
+
+    init() {
+        this.onLoad = (event) => {
+            if (event.target.id !== 'results') return;
+            const meta = event.target.querySelector('[data-total]');
+            if (!meta) return;
+            this.total = Number(meta.dataset.total);
+            this.active = Number(meta.dataset.active);
+        };
+        document.addEventListener('turbo:frame-load', this.onLoad);
+        this.$watch('sheet', (open) => document.body.classList.toggle('overflow-hidden', open));
+    },
+    destroy() {
+        document.removeEventListener('turbo:frame-load', this.onLoad);
+        document.body.classList.remove('overflow-hidden');
+    },
+    submit() {
+        clearTimeout(this.timer);
+        this.$refs.form.requestSubmit();
+    },
+    /** A short pause groups quick successive clicks into one request. */
+    queue() {
+        clearTimeout(this.timer);
+        this.timer = setTimeout(() => this.submit(), 140);
+    },
+    remove(field, value) {
+        if (field === 'price') {
+            window.dispatchEvent(new CustomEvent('price-reset'));
+        } else {
+            [...this.$refs.form.elements].forEach((el) => {
+                if (el.name === field && (value === null || el.value === value)) el.checked = false;
+            });
+        }
+        this.$nextTick(() => this.submit());
+    },
+    clear() {
+        [...this.$refs.form.elements].forEach((el) => {
+            if (el.type === 'checkbox' || el.type === 'radio') el.checked = false;
+        });
+        window.dispatchEvent(new CustomEvent('price-reset'));
+        this.$nextTick(() => this.submit());
+    },
+}));
+
 /* Two-thumb price slider used by the catalogue filters. */
 Alpine.data('priceRange', (floor, ceil, min, max) => ({
     floor,
@@ -318,6 +582,63 @@ Alpine.data('priceRange', (floor, ceil, min, max) => ({
         if (which === 'hi' && this.hi < this.lo + gap) this.hi = this.lo + gap;
     },
 }));
+
+/*
+ | QR card: draws the product's QR code with its name and price onto a picture that can be
+ | shared (phones) or downloaded and printed.
+ */
+window.qrCard = async (src, name, price, link, file, mode) => {
+    try {
+        const svg = await (await fetch(src)).text();
+        const image = new Image();
+        await new Promise((resolve, reject) => {
+            image.onload = resolve;
+            image.onerror = reject;
+            image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+        });
+        const canvas = document.createElement('canvas');
+        canvas.width = 900;
+        canvas.height = 1120;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(image, 90, 70, 720, 720);
+        ctx.fillStyle = '#0d1412';
+        ctx.textAlign = 'center';
+        ctx.font = '700 44px Inter, system-ui, sans-serif';
+        const title = name.length > 34 ? name.slice(0, 33) + '…' : name;
+        ctx.fillText(title, 450, 880);
+        ctx.font = '700 52px Inter, system-ui, sans-serif';
+        ctx.fillStyle = '#0b6b4f';
+        ctx.fillText(price, 450, 960);
+        ctx.font = '400 30px Inter, system-ui, sans-serif';
+        ctx.fillStyle = '#68716d';
+        ctx.fillText('Scan to view and order', 450, 1030);
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+        const picture = new File([blob], file, { type: 'image/png' });
+
+        if (mode === 'share' && navigator.canShare?.({ files: [picture] })) {
+            try {
+                await navigator.share({ files: [picture], title: name, text: `${name} — ${link}` });
+            } catch {
+                /* dismissed */
+            }
+            return;
+        }
+        if (mode === 'share') {
+            // No file sharing on this device: share or copy the link, and save the picture as well.
+            await window.shareProduct(name, link);
+        }
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = file;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+        if (mode !== 'share') toast('QR code saved to your downloads.');
+    } catch {
+        toast('Could not create the QR picture. Please try again.', true);
+    }
+};
 
 /* Share: native share sheet on phones, copy-link fallback on desktop. */
 window.shareProduct = async (title, url) => {
@@ -379,6 +700,9 @@ document.addEventListener('turbo:fetch-request-error', (event) => {
     const url = event.detail?.request?.url;
     if (url && event.target === document.documentElement) window.location.href = url;
 });
+
+// Show the loading bar quickly so a click always gets an immediate response.
+Turbo.config.drive.progressBarDelay = 120;
 
 window.Alpine = Alpine;
 window.Turbo = Turbo;

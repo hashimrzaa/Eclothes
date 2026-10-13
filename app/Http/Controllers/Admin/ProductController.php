@@ -136,7 +136,8 @@ class ProductController extends Controller
             }
         }
         foreach ($request->file('uploads', []) as $file) {
-            $kept[] = $file->store('products', 'public');
+            $kept[] = $stored = $file->store('products', 'public');
+            Product::makeThumb($stored);
         }
         $urls = array_filter($list($data['image_urls'] ?? ''), fn ($u) => Str::startsWith($u, ['http://', 'https://']));
 

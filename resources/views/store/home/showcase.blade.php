@@ -13,7 +13,7 @@
             @foreach ($items as $i => $product)
                 <a href="{{ $product->url }}" class="showcase-card" :style="card({{ $i }})" @click="pick({{ $i }}, $event)" draggable="false"
                     :aria-hidden="(active !== {{ $i }}).toString()" :tabindex="active === {{ $i }} ? 0 : -1" aria-label="{{ $product->title }}, {{ money($product->price) }}">
-                    <x-product-image :product="$product" :eager="$i < 3" draggable="false" />
+                    <x-product-image :product="$product" :eager="$i < 3" :full="true" draggable="false" />
                     <span class="absolute inset-0 bg-linear-to-t from-night/85 via-night/10 to-transparent" aria-hidden="true"></span>
                     @if ($product->on_sale)<span class="badge absolute top-3 left-3 bg-accent text-white">−{{ $product->discount_pct }}%</span>@endif
                     <span class="absolute inset-x-4 bottom-4 flex items-end justify-between gap-3">
@@ -49,7 +49,7 @@
                         <div class="mt-4 flex gap-2.5">
                             @if ($buyable && ! $options)
                                 <form method="post" action="{{ route('cart.add') }}" data-cart-form class="flex-1">
-                                    @csrf<input type="hidden" name="product_id" value="{{ $product->id }}">
+                                    <input type="hidden" name="product_id" value="{{ $product->id }}">
                                     <button class="btn w-full bg-lime text-night hover:bg-white"><x-lucide-shopping-bag class="size-[1.125rem]" aria-hidden="true" />Add to cart</button>
                                 </form>
                             @else
