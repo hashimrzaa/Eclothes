@@ -69,7 +69,13 @@ class SupplyController extends Controller
             ->when($request->query('state') === 'out', fn ($w) => $w->where('stock_qty', 0))
             ->orderByRaw('stock_verified_at IS NULL DESC')->orderBy('stock_verified_at')->paginate(30)->withQueryString();
 
-        return view('admin.stock', ['products' => $products, 'suppliers' => Supplier::orderBy('name')->get()]);
+        return view('admin.stock', [
+            'products' => $products,
+            'suppliers' => Supplier::orderBy('name')->get(),
+            // Shoppers waiting on a product; the ones that can be ordered again come first.
+            'alerts' => \App\Models\StockAlert::whereNull('notified_at')->with('product')->latest()->limit(60)->get()
+                ->sortByDesc(fn ($alert) => $alert->product?->isPurchasable())->values(),
+        ]);
     }
 
     public function verifyStock(Request $request, Product $product)
@@ -86,6 +92,13 @@ class SupplyController extends Controller
         $product->save();
 
         return back()->with('toast', "{$product->sku} verified at {$product->stock_qty} units.");
+    }
+
+    public function alertNotified(\App\Models\StockAlert $alert)
+    {
+        $alert->update(['notified_at' => now()]);
+
+        return back()->with('toast', 'Marked as told.');
     }
 
     public function verifyAll(Request $request)

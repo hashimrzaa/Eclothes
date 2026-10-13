@@ -678,11 +678,13 @@ button[aria-busy='true'] {
 .viewer-btn:disabled {
     opacity: 0.35;
 }
-.range-single {
+
+/* Size finder sliders */
+.range-fit {
     display: block;
     width: 100%;
-    height: 1.5rem;
+    height: 1.75rem;
     background: none;
-    accent-color: var(--color-lime);
+    accent-color: var(--color-primary);
     cursor: pointer;
 }

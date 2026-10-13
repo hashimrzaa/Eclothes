@@ -71,6 +71,24 @@ class ProductController extends Controller
         ]));
     }
 
+    /** "Tell me when it's back": keeps a WhatsApp number against an unavailable product. */
+    public function notify(Request $request, Product $product)
+    {
+        $request->merge(['notify_phone' => normalize_phone($request->input('notify_phone'))]);
+        $data = $request->validate(
+            ['notify_phone' => ['required', 'regex:/^03\d{9}$/']],
+            ['notify_phone.regex' => 'Enter a valid mobile number, for example 0300 1234567.', 'notify_phone.required' => 'Enter your WhatsApp number.'],
+        );
+        abort_unless(in_array($product->status, Product::LISTED, true), 404);
+
+        \App\Models\StockAlert::firstOrCreate(
+            ['product_id' => $product->id, 'phone' => $data['notify_phone'], 'notified_at' => null],
+            ['name' => $request->user()?->name],
+        );
+
+        return back()->with('toast', 'Done. We will WhatsApp you as soon as it is back in stock.');
+    }
+
     public function review(Request $request, Product $product)
     {
         $data = $request->validate([

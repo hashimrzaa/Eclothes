@@ -21,6 +21,7 @@ Route::post('/age-confirm', [AccountController::class, 'ageConfirm'])->name('age
 
 Route::get('/p/{slug}', [ProductController::class, 'show'])->name('product.show');
 Route::get('/p/{slug}/qr.svg', [ProductController::class, 'qr'])->name('product.qr');
+Route::post('/p/{product}/notify', [ProductController::class, 'notify'])->name('product.notify')->middleware('throttle:forms');
 Route::post('/p/{product}/reviews', [ProductController::class, 'review'])->name('product.review')->middleware('throttle:forms');
 
 Route::get('/cart', [CartController::class, 'index'])->name('cart');
@@ -92,6 +93,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
     Route::middleware('staff:stock')->group(function () {
         Route::get('/stock', [Admin\SupplyController::class, 'stock'])->name('stock.index');
         Route::post('/stock/verify-all', [Admin\SupplyController::class, 'verifyAll'])->name('stock.verify-all');
+        Route::patch('/stock/alerts/{alert}', [Admin\SupplyController::class, 'alertNotified'])->name('stock.alert');
         Route::patch('/stock/{product}', [Admin\SupplyController::class, 'verifyStock'])->name('stock.verify');
     });
 

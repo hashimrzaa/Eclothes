@@ -1,6 +1,5 @@
 {{--
-    Product gallery: hover to magnify, open full screen to zoom and drag the photo around,
-    and "Try it live" to hold the product photo over the phone or laptop camera.
+    Product gallery: hover to magnify, or open full screen to zoom and drag the photo around.
 --}}
 @php
     $images = $product->image_urls;
@@ -43,9 +42,6 @@
 
             @if ($images)
                 <div class="absolute right-3 bottom-3 flex gap-2" @click.stop @pointermove.stop>
-                    <button type="button" class="inline-flex h-11 items-center gap-2 rounded-full bg-night/90 px-4 text-sm font-semibold text-white shadow-e2 backdrop-blur transition-colors hover:bg-night" @click="startCam()" aria-haspopup="dialog">
-                        <x-lucide-camera class="size-[1.125rem] text-lime" aria-hidden="true" />Try it live
-                    </button>
                     <button type="button" class="grid size-11 place-items-center rounded-full bg-surface/95 text-ink shadow-e2 backdrop-blur transition-colors hover:bg-surface" @click="open()" aria-label="Open full screen and zoom" aria-haspopup="dialog">
                         <x-lucide-maximize-2 class="size-[1.125rem]" aria-hidden="true" />
                     </button>
@@ -60,7 +56,7 @@
     </div>
 
     @if ($images)
-        {{-- Both full-screen views are moved to the end of the page so nothing can sit on top of them. --}}
+        {{-- Moved to the end of the page so nothing can sit on top of it. --}}
         {{-- Full-screen viewer: wheel or pinch to zoom, drag to move around --}}
         <template x-teleport="body">
         <div x-show="box" x-cloak x-transition.opacity class="fixed inset-0 z-[60] flex flex-col bg-night text-white" role="dialog" aria-modal="true" aria-label="{{ $product->title }} — full screen"
@@ -87,46 +83,6 @@
                 </template>
             </div>
             <p class="shrink-0 p-3 text-center text-xs text-white/50">Scroll or pinch to zoom · drag to move · double-click to zoom in or reset</p>
-        </div>
-        </template>
-
-        {{-- Live try-on: the product photo floats over the camera so it can be held up against yourself or your room --}}
-        <template x-teleport="body">
-        <div x-show="cam" x-cloak x-transition.opacity class="fixed inset-0 z-[60] flex flex-col bg-night text-white" role="dialog" aria-modal="true" aria-label="Try {{ $product->title }} live with your camera" @keydown.escape.window="cam && stopCam()">
-            <div class="flex shrink-0 items-center justify-between gap-3 p-3 sm:p-4">
-                <p class="flex min-w-0 items-center gap-2 text-sm font-semibold"><x-lucide-camera class="size-[1.125rem] shrink-0 text-lime" aria-hidden="true" /><span class="truncate">Try it live · {{ $product->title }}</span></p>
-                <button type="button" class="viewer-btn bg-white text-night hover:bg-lime" @click="stopCam()" aria-label="Close camera"><x-lucide-x class="size-5" aria-hidden="true" /></button>
-            </div>
-
-            <div x-ref="camStage" class="relative min-h-0 flex-1 touch-none overflow-hidden bg-black select-none">
-                <video x-ref="video" playsinline muted class="size-full object-cover" :class="facing === 'user' && '-scale-x-100'"></video>
-
-                <img x-ref="overlay" :src="current" alt="" draggable="false" x-show="stream" class="absolute top-1/2 left-1/2 w-auto max-w-none cursor-grab rounded-2xl shadow-e3 active:cursor-grabbing"
-                    :style="`height: ${size}%; opacity: ${opacity / 100}; transform: translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px))`"
-                    @pointerdown="tdown($event)" @pointermove="tmove($event)" @pointerup="tdrag = null" @pointercancel="tdrag = null">
-
-                <div x-show="!stream && !camError" class="absolute inset-0 grid place-items-center text-sm text-white/70">Starting your camera…</div>
-                <div x-show="camError" x-cloak class="absolute inset-0 grid place-items-center p-6 text-center">
-                    <div class="max-w-sm">
-                        <span class="mx-auto grid size-14 place-items-center rounded-full bg-white/10"><x-lucide-camera-off class="size-6" aria-hidden="true" /></span>
-                        <p class="mt-4 font-semibold" x-text="camError"></p>
-                        <button type="button" class="btn mt-5 bg-lime text-night" @click="startCam()">Try again</button>
-                    </div>
-                </div>
-                <p x-show="stream" class="pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 rounded-full bg-night/70 px-3 py-1.5 text-xs whitespace-nowrap backdrop-blur">Drag the photo to place it · use the sliders to fit</p>
-            </div>
-
-            <div class="shrink-0 space-y-3 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]" x-show="stream">
-                <div class="mx-auto grid max-w-xl grid-cols-2 gap-4 text-xs">
-                    <label class="block">Size<input type="range" min="15" max="100" x-model.number="size" class="range-single mt-1.5"></label>
-                    <label class="block">See-through<input type="range" min="25" max="100" x-model.number="opacity" class="range-single mt-1.5"></label>
-                </div>
-                <div class="flex items-center justify-center gap-3">
-                    <button type="button" class="viewer-btn" @click="flip()" aria-label="Switch camera" title="Switch camera"><x-lucide-switch-camera class="size-5" aria-hidden="true" /></button>
-                    <button type="button" class="btn btn-lg bg-lime text-night hover:bg-white" @click="snap()"><x-lucide-aperture class="size-5" aria-hidden="true" />Take photo</button>
-                    <button type="button" class="viewer-btn" @click="tx = 0; ty = 0; size = 55; opacity = 85" aria-label="Reset position" title="Reset"><x-lucide-rotate-ccw class="size-5" aria-hidden="true" /></button>
-                </div>
-            </div>
         </div>
         </template>
     @endif

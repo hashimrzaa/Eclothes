@@ -301,8 +301,7 @@ Alpine.data('showcase', (total) => ({
 }));
 
 /*
- | Product gallery: hover magnifier, full-screen viewer (zoom, drag, pinch) and a live camera
- | try-on where the product photo is held over the camera picture.
+ | Product gallery: hover magnifier and a full-screen viewer (zoom, drag, pinch).
  */
 const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -322,24 +321,11 @@ Alpine.data('gallery', (images) => ({
     drag: null,
     pinch: null,
     pointers: new Map(),
-    // camera try-on
-    cam: false,
-    stream: null,
-    facing: 'user',
-    camError: '',
-    tx: 0,
-    ty: 0,
-    size: 55,
-    opacity: 85,
-    tdrag: null,
 
     init() {
-        const lock = () => document.body.classList.toggle('overflow-hidden', this.box || this.cam);
-        this.$watch('box', lock);
-        this.$watch('cam', lock);
+        this.$watch('box', (open) => document.body.classList.toggle('overflow-hidden', open));
     },
     destroy() {
-        this.stopCam();
         document.body.classList.remove('overflow-hidden');
     },
     get current() {
@@ -400,83 +386,69 @@ Alpine.data('gallery', (images) => ({
         if (this.scale === 1) this.x = this.y = 0;
     },
 
-    async startCam() {
-        if (!this.current) return;
-        this.cam = true;
-        this.camError = '';
-        this.stream?.getTracks().forEach((track) => track.stop());
-        this.stream = null;
-        if (!navigator.mediaDevices?.getUserMedia) {
-            this.camError = 'The camera only works on a secure (https) address or on this computer.';
-            return;
-        }
-        try {
-            this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: this.facing, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
-            this.$refs.video.srcObject = this.stream;
-            await this.$refs.video.play();
-        } catch {
-            this.camError = 'We could not open your camera. Allow camera access in your browser and try again.';
-        }
-    },
-    stopCam() {
-        this.stream?.getTracks().forEach((track) => track.stop());
-        this.stream = null;
-        if (this.$refs.video) this.$refs.video.srcObject = null;
-        this.cam = false;
-    },
-    flip() {
-        this.facing = this.facing === 'user' ? 'environment' : 'user';
-        this.startCam();
-    },
-    tdown(event) {
-        event.currentTarget.setPointerCapture(event.pointerId);
-        this.tdrag = { x: event.clientX - this.tx, y: event.clientY - this.ty };
-    },
-    tmove(event) {
-        if (!this.tdrag) return;
-        this.tx = event.clientX - this.tdrag.x;
-        this.ty = event.clientY - this.tdrag.y;
-    },
-    /** Save what is on screen: the camera picture with the product photo where the shopper placed it. */
-    snap() {
-        const video = this.$refs.video;
-        const overlay = this.$refs.overlay;
-        const stage = this.$refs.camStage.getBoundingClientRect();
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(stage.width * 2);
-        canvas.height = Math.round(stage.height * 2);
-        const ctx = canvas.getContext('2d');
-        ctx.scale(2, 2);
-
-        // Camera picture, cropped the same way as on screen (cover) and mirrored for the front camera.
-        const k = Math.max(stage.width / video.videoWidth, stage.height / video.videoHeight);
-        const w = video.videoWidth * k;
-        const h = video.videoHeight * k;
-        ctx.save();
-        if (this.facing === 'user') {
-            ctx.translate(stage.width, 0);
-            ctx.scale(-1, 1);
-        }
-        ctx.drawImage(video, (stage.width - w) / 2, (stage.height - h) / 2, w, h);
-        ctx.restore();
-
-        const o = overlay.getBoundingClientRect();
-        ctx.globalAlpha = this.opacity / 100;
-        try {
-            ctx.drawImage(overlay, o.left - stage.left, o.top - stage.top, o.width, o.height);
-            canvas.toBlob((blob) => {
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = 'try-on.jpg';
-                link.click();
-                setTimeout(() => URL.revokeObjectURL(link.href), 2000);
-                toast('Photo saved to your downloads.');
-            }, 'image/jpeg', 0.9);
-        } catch {
-            toast('This photo cannot be saved from the camera view.', true);
-        }
-    },
 }));
+
+/*
+ | Find my size. The shopper's height, weight and preferred fit are kept on their own device,
+ | so every later product can show "Your size here" without asking again.
+ */
+const FIT_KEY = 'fit-profile';
+const savedFit = (() => {
+    try {
+        return JSON.parse(localStorage.getItem(FIT_KEY) || 'null');
+    } catch {
+        return null;
+    }
+})();
+
+Alpine.store('fit', {
+    height: savedFit?.height ?? 165,
+    weight: savedFit?.weight ?? 62,
+    pref: savedFit?.pref ?? 'regular',
+    age: savedFit?.age ?? 6,
+    kidHeight: savedFit?.kidHeight ?? 115,
+    saved: !!savedFit,
+    save() {
+        this.saved = true;
+        try {
+            localStorage.setItem(FIT_KEY, JSON.stringify({ height: this.height, weight: this.weight, pref: this.pref, age: this.age, kidHeight: this.kidHeight }));
+        } catch {
+            /* private mode */
+        }
+    },
+});
+
+const ADULT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+const KID_SIZES = ['0–2 Years', '3–5 Years', '6–8 Years', '9–12 Years', '13–16 Years'];
+// Upper weight (kg, for someone 165 cm tall) that still fits each size.
+const WEIGHT_LIMITS = { women: [47, 55, 63, 72, 82, 93], men: [54, 63, 73, 83, 94, 106] };
+// Tallest child (cm) each age size is cut for.
+const KID_HEIGHTS = [92, 110, 128, 152, 170];
+
+/** Returns { ideal, pick, exact, scale } for a product's size list, or null when it cannot be worked out. */
+window.fitSize = (sizes, kind, p) => {
+    if (kind === 'kids') {
+        const scale = KID_SIZES.filter((s) => sizes.includes(s));
+        if (!scale.length) return null;
+        let i = p.age <= 2 ? 0 : p.age <= 5 ? 1 : p.age <= 8 ? 2 : p.age <= 12 ? 3 : 4;
+        // A child taller than the age band is cut for moves up one size.
+        if (p.kidHeight > KID_HEIGHTS[i] && i < 4) i++;
+        const ideal = KID_SIZES[i];
+        const pick = scale.reduce((best, s) => (Math.abs(KID_SIZES.indexOf(s) - i) < Math.abs(KID_SIZES.indexOf(best) - i) ? s : best), scale[0]);
+        return { ideal, pick, exact: pick === ideal, scale };
+    }
+    const scale = ADULT_SIZES.filter((s) => sizes.includes(s));
+    if (!scale.length) return null;
+    // Taller people carry the same weight on a longer frame, so height shifts the weight bands.
+    const adjusted = p.weight - (p.height - 165) * 0.45;
+    let i = WEIGHT_LIMITS[kind === 'men' ? 'men' : 'women'].findIndex((limit) => adjusted <= limit);
+    if (i === -1) i = 6;
+    if (p.pref === 'relaxed') i = Math.min(i + 1, 6);
+    if (p.pref === 'fitted' && adjusted <= (WEIGHT_LIMITS[kind === 'men' ? 'men' : 'women'][i] ?? 999) - 4) i = Math.max(i - 1, 0);
+    const ideal = ADULT_SIZES[i];
+    const pick = scale.reduce((best, s) => (Math.abs(ADULT_SIZES.indexOf(s) - i) < Math.abs(ADULT_SIZES.indexOf(best) - i) ? s : best), scale[0]);
+    return { ideal, pick, exact: pick === ideal, scale };
+};
 
 /* Deal explorer on the homepage: tabs that rotate by themselves until the shopper takes over. */
 Alpine.data('dealTabs', (total) => ({

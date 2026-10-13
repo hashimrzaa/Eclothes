@@ -21,6 +21,14 @@
     $colours = $product->colours ?? [];
     $sizes = $product->sizes ?? [];
     $showSizeGuide = $sizes && in_array($product->filter_set, ['fashion', 'kids'], true);
+    // "Find my size" works for letter sizes (XS–XXXL) and for kids' age sizes.
+    $fitKind = match (true) {
+        ! $sizes => null,
+        (bool) array_intersect($sizes, ['0–2 Years', '3–5 Years', '6–8 Years', '9–12 Years', '13–16 Years']) => 'kids',
+        ! array_intersect($sizes, ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']) => null,
+        $product->department === 'men' => 'men',
+        default => 'women',
+    };
     $waText = "Hi, I have a question about {$product->title} ({$product->sku}) — ".url($product->url);
 @endphp
 
@@ -74,7 +82,7 @@
                     <p class="mt-4 text-[0.9375rem] text-ink-2">{{ $product->short_description }}</p>
                 @endif
 
-                <form id="buy-form" method="post" action="{{ route('cart.add') }}" class="mt-6 space-y-6" data-cart-form
+                <form id="buy-form" method="post" action="{{ route('cart.add') }}" class="mt-6 space-y-6" data-cart-form @pick-size.window="size = $event.detail"
                     x-data="{ colour: @js(old('colour', count($colours) === 1 ? $colours[0] : null)), size: @js(old('size', count($sizes) === 1 ? $sizes[0] : null)), qty: 1, max: {{ max(1, min($product->stock_qty, \App\Services\Cart::MAX_PER_LINE)) }} }">
                     @csrf
                     <input type="hidden" name="product_id" value="{{ $product->id }}">
@@ -99,24 +107,23 @@
                         <fieldset>
                             <div class="flex items-center justify-between">
                                 <legend class="text-sm font-semibold">Size<span class="ml-2 font-normal text-muted" x-text="size ?? 'Select a size'"></span></legend>
-                                {{-- QR code: scan to open this product on a phone --}}
-    <x-modal name="qr" title="Product QR code" size="max-w-sm">
-        <div class="text-center" x-data="{ src: @js(route('product.qr', $product->slug, false)), link: @js(url($product->url)), name: @js($product->title), price: @js(money($product->price)), file: @js($product->sku.'-qr.png') }">
-            <div class="mx-auto w-56 rounded-2xl border border-line bg-white p-3"><img :src="src" alt="QR code that opens {{ $product->title }}" width="480" height="480" class="size-full" loading="lazy"></div>
-            <p class="mt-4 line-clamp-2 font-semibold">{{ $product->title }}</p>
-            <p class="text-sm text-muted">{{ money($product->price) }} · SKU {{ $product->sku }}</p>
-            <p class="mt-2 text-[0.8125rem] text-muted">Scan with a phone camera to open this product and add it to the cart.</p>
-            <div class="mt-5 grid grid-cols-2 gap-2.5">
-                <button type="button" class="btn btn-primary" @click="qrCard(src, name, price, link, file, 'share')"><x-lucide-share-2 class="size-[1.125rem]" aria-hidden="true" />Share</button>
-                <button type="button" class="btn btn-outline" @click="qrCard(src, name, price, link, file, 'download')"><x-lucide-download class="size-[1.125rem]" aria-hidden="true" />Download</button>
-            </div>
-        </div>
-    </x-modal>
-
-    @if ($showSizeGuide)
+                                <div class="flex items-center gap-3">
+                                    @if ($fitKind)
+                                        <button type="button" class="link inline-flex items-center gap-1.5 text-sm" @click="$dispatch('open-modal', 'fit')" aria-haspopup="dialog"><x-lucide-sparkles class="size-4" aria-hidden="true" />Find my size</button>
+                                    @endif
+                                    @if ($showSizeGuide)
                                     <button type="button" class="link inline-flex items-center gap-1.5 text-sm" @click="$dispatch('open-modal', 'size-guide')"><x-lucide-ruler class="size-4" aria-hidden="true" />Size guide</button>
-                                @endif
+                                    @endif
+                                </div>
                             </div>
+                            @if ($fitKind)
+                                {{-- Remembered from the last time this shopper used "Find my size" --}}
+                                <p x-data x-show="$store.fit.saved && fitSize(@js($sizes), @js($fitKind), $store.fit)" x-cloak class="mt-2.5 flex flex-wrap items-center gap-2 rounded-control bg-primary-soft px-3 py-2 text-sm text-primary">
+                                    <x-lucide-sparkles class="size-4 shrink-0" aria-hidden="true" />
+                                    <span>Your size here: <strong x-text="fitSize(@js($sizes), @js($fitKind), $store.fit)?.pick"></strong></span>
+                                    <button type="button" class="ml-auto font-semibold underline underline-offset-4" @click="$dispatch('pick-size', fitSize(@js($sizes), @js($fitKind), $store.fit).pick)">Select it</button>
+                                </p>
+                            @endif
                             <div class="mt-3 flex flex-wrap gap-2">
                                 @foreach ($sizes as $size)
                                     <label>
@@ -142,14 +149,25 @@
                             <button class="btn btn-primary btn-lg min-w-0 flex-1"><x-lucide-shopping-bag class="size-5" aria-hidden="true" />Add to Cart</button>
                         </div>
                         <button name="buy_now" value="1" class="btn btn-dark btn-lg w-full">Buy Now — Cash on Delivery</button>
-                    @else
-                        <div class="rounded-card bg-sunken p-4 text-sm text-ink-2">
-                            <p class="font-semibold">{{ $availability === 'sold_out' ? 'This product is sold out.' : 'We are confirming stock with our supplier.' }}</p>
-                            <p class="mt-1 text-muted">Message us on WhatsApp and we will tell you when it is available.</p>
-                            <a href="{{ wa_link($waText) }}" target="_blank" rel="noopener" class="btn btn-outline mt-3"><x-brand-icon name="whatsapp" class="size-[1.125rem] text-[#1faa53]" />Ask on WhatsApp</a>
-                        </div>
                     @endif
                 </form>
+
+                @unless ($canBuy)
+                    <div class="mt-6 rounded-card border border-line bg-surface p-5">
+                        <p class="flex items-center gap-2 font-semibold"><x-lucide-bell-ring class="size-[1.125rem] text-primary" aria-hidden="true" />{{ $availability === 'sold_out' ? 'Out of stock right now' : 'We are confirming stock with our supplier' }}</p>
+                        <p class="mt-1 text-sm text-muted">Leave your WhatsApp number and we will message you the moment it is available again. Nothing else, no spam.</p>
+                        <form method="post" action="{{ route('product.notify', $product) }}" class="mt-4" data-once>
+                            @csrf
+                            <div class="flex flex-col gap-2 sm:flex-row">
+                                <label for="notify-phone" class="sr-only">WhatsApp number</label>
+                                <input id="notify-phone" name="notify_phone" type="tel" inputmode="tel" autocomplete="tel" required value="{{ old('notify_phone', auth()->user()?->phone) }}" placeholder="0300 1234567" class="field" aria-invalid="{{ $errors->has('notify_phone') ? 'true' : 'false' }}">
+                                <button class="btn btn-primary shrink-0"><x-lucide-bell-ring class="size-[1.125rem]" aria-hidden="true" />Tell me when it's back</button>
+                            </div>
+                            @error('notify_phone')<p class="error"><x-lucide-circle-alert class="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />{{ $message }}</p>@enderror
+                        </form>
+                        <a href="{{ wa_link($waText) }}" target="_blank" rel="noopener" class="link mt-3 inline-flex items-center gap-1.5 text-sm"><x-brand-icon name="whatsapp" class="size-4 text-[#1faa53]" />Or ask us on WhatsApp</a>
+                    </div>
+                @endunless
 
                 <div class="mt-4 flex gap-2">
                     <button type="button" class="btn btn-ghost btn-sm" x-data="wishlistButton('{{ route('wishlist.toggle', $product, false) }}', {{ $product->id }})" @click="toggle" :aria-pressed="active.toString()">
@@ -326,6 +344,24 @@
             <p class="text-center text-[0.8125rem] text-muted">Reviews are checked by our team before they are published.</p>
         </form>
     </x-modal>
+
+    {{-- QR code: scan to open this product on a phone --}}
+    <x-modal name="qr" title="Product QR code" size="max-w-sm">
+        <div class="text-center" x-data="{ src: @js(route('product.qr', $product->slug, false)), link: @js(url($product->url)), name: @js($product->title), price: @js(money($product->price)), file: @js($product->sku.'-qr.png') }">
+            <div class="mx-auto w-56 rounded-2xl border border-line bg-white p-3"><img :src="src" alt="QR code that opens {{ $product->title }}" width="480" height="480" class="size-full" loading="lazy"></div>
+            <p class="mt-4 line-clamp-2 font-semibold">{{ $product->title }}</p>
+            <p class="text-sm text-muted">{{ money($product->price) }} · SKU {{ $product->sku }}</p>
+            <p class="mt-2 text-[0.8125rem] text-muted">Scan with a phone camera to open this product and add it to the cart.</p>
+            <div class="mt-5 grid grid-cols-2 gap-2.5">
+                <button type="button" class="btn btn-primary" @click="qrCard(src, name, price, link, file, 'share')"><x-lucide-share-2 class="size-[1.125rem]" aria-hidden="true" />Share</button>
+                <button type="button" class="btn btn-outline" @click="qrCard(src, name, price, link, file, 'download')"><x-lucide-download class="size-[1.125rem]" aria-hidden="true" />Download</button>
+            </div>
+        </div>
+    </x-modal>
+
+    @if ($fitKind)
+        @include('store.partials.fit-finder')
+    @endif
 
     @if ($showSizeGuide)
         <x-modal name="size-guide" title="Size guide" size="max-w-xl">

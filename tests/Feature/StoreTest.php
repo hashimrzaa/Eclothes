@@ -210,4 +210,30 @@ class StoreTest extends TestCase
         $draft = Product::where('status', 'draft')->first();
         $this->get('/p/'.$draft->slug.'/qr.svg')->assertNotFound();
     }
+
+    public function test_shopper_can_ask_to_be_told_when_an_unavailable_product_returns(): void
+    {
+        $product = Product::general()->where('status', 'sold_out')->firstOrFail();
+
+        $this->get($product->url)->assertOk()->assertSee("Tell me when it's back", false)->assertDontSee('Add to Cart');
+        $this->post('/p/'.$product->id.'/notify', ['notify_phone' => '123'])->assertSessionHasErrors('notify_phone');
+        $this->post('/p/'.$product->id.'/notify', ['notify_phone' => '0300 111 2223'])->assertSessionHasNoErrors();
+        $this->post('/p/'.$product->id.'/notify', ['notify_phone' => '03001112223']); // asking twice keeps one request
+        $this->assertSame(1, \App\Models\StockAlert::where('product_id', $product->id)->count());
+
+        $owner = User::where('role', 'owner')->first();
+        $this->actingAs($owner)->get('/admin/stock')->assertOk()->assertSee('Customers waiting for restock')->assertSee('03001112223');
+        $alert = \App\Models\StockAlert::first();
+        $this->actingAs($owner)->patch('/admin/stock/alerts/'.$alert->id)->assertSessionHasNoErrors();
+        $this->assertNotNull($alert->fresh()->notified_at);
+    }
+
+    public function test_size_finder_is_offered_only_for_sizes_it_understands(): void
+    {
+        $letters = Product::general()->purchasable()->get()->first(fn ($p) => in_array('M', $p->sizes ?? [], true));
+        $none = Product::general()->purchasable()->get()->first(fn ($p) => empty($p->sizes));
+
+        $this->get($letters->url)->assertOk()->assertSee('Find my size');
+        $this->get($none->url)->assertOk()->assertDontSee('Find my size');
+    }
 }

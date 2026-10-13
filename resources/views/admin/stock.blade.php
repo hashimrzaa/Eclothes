@@ -5,6 +5,38 @@
 @php $hours = config('store.stock_stale_hours'); @endphp
 
 @section('content')
+    {{-- Demand for unavailable products: who asked to be told, and whether it can be ordered again --}}
+    @if ($alerts->isNotEmpty())
+        <section id="waiting" class="card mb-6 overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-4">
+                <h2 class="flex items-center gap-2 text-base font-bold"><x-lucide-bell-ring class="size-[1.125rem] text-primary" aria-hidden="true" />Customers waiting for restock <span class="badge badge-warning">{{ $alerts->count() }}</span></h2>
+                <p class="text-[0.8125rem] text-muted">Message them on WhatsApp once the product is back, then mark them as told.</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="tbl">
+                    <thead><tr><th>Product</th><th>Customer</th><th>Asked</th><th>Now</th><th><span class="sr-only">Actions</span></th></tr></thead>
+                    <tbody>
+                        @foreach ($alerts as $alert)
+                            @php $back = $alert->product?->isPurchasable(); @endphp
+                            <tr>
+                                <td><span class="line-clamp-1 font-medium">{{ $alert->product?->title ?? 'Deleted product' }}</span><span class="block text-xs text-muted">{{ $alert->product?->sku }}</span></td>
+                                <td class="tabular-nums">{{ $alert->phone }}@if ($alert->name)<span class="block text-xs text-muted">{{ $alert->name }}</span>@endif</td>
+                                <td class="whitespace-nowrap text-muted">{{ $alert->created_at->diffForHumans() }}</td>
+                                <td><span class="badge {{ $back ? 'badge-success' : 'badge-neutral' }}">{{ $back ? 'Back in stock' : 'Still unavailable' }}</span></td>
+                                <td class="text-right whitespace-nowrap">
+                                    @if ($alert->product)
+                                        <a href="{{ wa_link('Assalam o Alaikum! Good news from '.config('store.name').': “'.$alert->product->title.'” is back in stock. Order here: '.url($alert->product->url), $alert->phone) }}" target="_blank" rel="noopener" class="btn btn-sm {{ $back ? 'btn-primary' : 'btn-outline' }}"><x-brand-icon name="whatsapp" class="size-4" />Message</a>
+                                    @endif
+                                    <form method="post" action="{{ route('admin.stock.alert', $alert) }}" class="inline">@csrf @method('patch')<button class="btn btn-ghost btn-sm">Mark as told</button></form>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    @endif
+
     <div class="flex items-start gap-3 rounded-card bg-info-soft p-4 text-sm text-info">
         <x-lucide-info class="mt-0.5 size-[1.125rem] shrink-0" aria-hidden="true" />
         @if ($hours < 1)
