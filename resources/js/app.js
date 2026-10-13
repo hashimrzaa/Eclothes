@@ -1,34 +1,143 @@
+import * as Turbo from '@hotwired/turbo';
 import Alpine from 'alpinejs';
 import collapse from '@alpinejs/collapse';
-import { initMotion } from './motion';
+import { startMotion, stopMotion, refreshMotion } from './motion';
 
 Alpine.plugin(collapse);
 
+const toast = (message, error = false) => window.dispatchEvent(new CustomEvent('toast', { detail: { message, error } }));
 const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 
-/* Header search with autocomplete (debounced, keyboard navigable). */
-Alpine.data('searchBox', (endpoint) => ({
-    q: '',
+/* ==========================================================================
+   Cart: lives in a slide-over drawer and is updated in the background, so
+   adding to the cart never interrupts browsing.
+   ========================================================================== */
+
+Alpine.store('cart', {
+    open: false,
+    html: '',
+    count: 0,
+    subtotal: '',
+    busy: false,
+    fresh: false,
+
+    /** Each rendered page reports the server's numbers; the drawer body is fetched on demand. */
+    sync(count, subtotal) {
+        this.count = count;
+        this.subtotal = subtotal;
+        this.fresh = false;
+    },
+    apply(data) {
+        if (data.html !== undefined) this.html = data.html;
+        this.count = data.count;
+        this.subtotal = data.subtotal;
+        this.fresh = true;
+    },
+    async show() {
+        this.open = true;
+        if (!this.fresh) await this.refresh();
+    },
+    async refresh() {
+        this.busy = true;
+        try {
+            const res = await fetch('/cart/drawer', { headers: { Accept: 'application/json' } });
+            this.apply(await res.json());
+        } catch {
+            toast('Could not load your cart. Please try again.', true);
+        } finally {
+            this.busy = false;
+        }
+    },
+    async send(form, submitter) {
+        if (this.busy) return;
+        this.busy = true;
+        submitter?.setAttribute('aria-busy', 'true');
+        try {
+            const res = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form, submitter),
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (res.status === 419) return window.location.reload();
+            const data = await res.json();
+            if (!res.ok) {
+                const first = data.errors ? Object.values(data.errors)[0]?.[0] : null;
+                toast(data.error || first || data.message || 'Something went wrong. Please try again.', true);
+                if (data.count !== undefined) this.apply(data);
+                return;
+            }
+            this.apply(data);
+            if (!form.hasAttribute('data-cart-quiet')) this.open = true;
+            // The cart and checkout pages show the same data in the page itself: keep them in step.
+            if (/^\/(cart|checkout)$/.test(window.location.pathname)) Turbo.visit(window.location.href, { action: 'replace' });
+        } catch {
+            toast('Could not update your cart. Check your connection and try again.', true);
+        } finally {
+            this.busy = false;
+            submitter?.removeAttribute('aria-busy');
+        }
+    },
+});
+
+// Any form marked data-cart-form is sent in the background (Buy Now still goes straight to checkout).
+document.addEventListener('submit', (event) => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement) || !form.hasAttribute('data-cart-form')) return;
+    if (event.submitter?.name === 'buy_now') return;
+    event.preventDefault();
+    event.stopPropagation();
+    Alpine.store('cart').send(form, event.submitter);
+}, true);
+
+/* ==========================================================================
+   Search: recent searches, trending terms and live results with photos.
+   ========================================================================== */
+
+const RECENT_KEY = 'recent-searches';
+const readRecent = () => {
+    try {
+        return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]').filter((v) => typeof v === 'string').slice(0, 6);
+    } catch {
+        return [];
+    }
+};
+
+Alpine.data('searchBox', (endpoint, initial = '') => ({
+    q: initial,
     open: false,
     loading: false,
     products: [],
     categories: [],
+    recent: [],
     active: -1,
     timer: null,
     controller: null,
 
+    init() {
+        this.recent = readRecent();
+    },
+    get typing() {
+        return this.q.trim().length > 1;
+    },
     get items() {
         return [...this.categories.map((c) => c.url), ...this.products.map((p) => p.url)];
+    },
+    focus() {
+        this.open = true;
+        if (this.typing && !this.products.length && !this.categories.length) this.fetch();
     },
     onInput() {
         clearTimeout(this.timer);
         this.active = -1;
-        if (this.q.trim().length < 2) {
-            this.open = false;
+        this.open = true;
+        if (!this.typing) {
+            this.products = [];
+            this.categories = [];
+            this.loading = false;
             return;
         }
         this.loading = true;
-        this.timer = setTimeout(() => this.fetch(), 220);
+        this.timer = setTimeout(() => this.fetch(), 200);
     },
     async fetch() {
         this.controller?.abort();
@@ -41,9 +150,8 @@ Alpine.data('searchBox', (endpoint) => ({
             const data = await res.json();
             this.products = data.products;
             this.categories = data.categories;
-            this.open = true;
         } catch (e) {
-            if (e.name !== 'AbortError') this.open = false;
+            if (e.name !== 'AbortError') this.products = this.categories = [];
         } finally {
             this.loading = false;
         }
@@ -52,11 +160,36 @@ Alpine.data('searchBox', (endpoint) => ({
         if (!this.open || !this.items.length) return;
         this.active = (this.active + step + this.items.length) % this.items.length;
     },
-    go(event) {
+    remember(term = this.q) {
+        term = term.trim();
+        if (term.length < 2) return;
+        this.recent = [term, ...this.recent.filter((v) => v.toLowerCase() !== term.toLowerCase())].slice(0, 6);
+        try {
+            localStorage.setItem(RECENT_KEY, JSON.stringify(this.recent));
+        } catch {
+            /* private mode */
+        }
+    },
+    forget(term) {
+        this.recent = this.recent.filter((v) => v !== term);
+        try {
+            localStorage.setItem(RECENT_KEY, JSON.stringify(this.recent));
+        } catch {
+            /* private mode */
+        }
+    },
+    submit(event) {
         if (this.open && this.active >= 0) {
             event.preventDefault();
-            window.location.href = this.items[this.active];
+            Turbo.visit(this.items[this.active]);
+            return;
         }
+        if (!this.q.trim()) {
+            event.preventDefault();
+            return;
+        }
+        this.remember();
+        this.open = false;
     },
 }));
 
@@ -77,10 +210,10 @@ Alpine.data('wishlistButton', (url, initial) => ({
             const data = await res.json();
             this.active = data.active;
             window.dispatchEvent(new CustomEvent('wishlist-count', { detail: data.count }));
-            window.dispatchEvent(new CustomEvent('toast', { detail: { message: data.active ? 'Saved to your wishlist.' : 'Removed from your wishlist.' } }));
+            toast(data.active ? 'Saved to your wishlist.' : 'Removed from your wishlist.');
         } catch {
             this.active = !this.active;
-            window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Could not update your wishlist. Please try again.', error: true } }));
+            toast('Could not update your wishlist. Please try again.', true);
         } finally {
             this.busy = false;
         }
@@ -93,13 +226,96 @@ Alpine.data('toasts', (initial = []) => ({
     init() {
         initial.forEach((t) => this.push(t));
     },
-    push(toast) {
+    push(item) {
         const id = Date.now() + Math.random();
-        this.list.push({ id, ...toast });
-        setTimeout(() => this.dismiss(id), toast.error ? 7000 : 4500);
+        this.list.push({ id, ...item });
+        setTimeout(() => this.dismiss(id), item.error ? 7000 : 4500);
     },
     dismiss(id) {
         this.list = this.list.filter((t) => t.id !== id);
+    },
+}));
+
+/* ==========================================================================
+   Homepage showcase: a 3D carousel of the best products that plays by itself,
+   can be swiped, and updates the product details beside it.
+   ========================================================================== */
+
+Alpine.data('showcase', (total) => ({
+    active: 0,
+    total,
+    paused: false,
+    timer: null,
+    startX: null,
+
+    init() {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || total < 2) return;
+        this.timer = setInterval(() => {
+            if (!this.paused && document.visibilityState === 'visible') this.next();
+        }, 4200);
+    },
+    destroy() {
+        clearInterval(this.timer);
+    },
+    next() {
+        this.active = (this.active + 1) % this.total;
+    },
+    prev() {
+        this.active = (this.active - 1 + this.total) % this.total;
+    },
+    offset(i) {
+        let d = i - this.active;
+        if (d > this.total / 2) d -= this.total;
+        if (d < -this.total / 2) d += this.total;
+        return d;
+    },
+    card(i) {
+        const d = this.offset(i);
+        const a = Math.abs(d);
+        return {
+            transform: `translateX(calc(${d} * var(--step))) translateZ(${a * -8}rem) rotateY(${d * -30}deg)`,
+            opacity: a > 2 ? 0 : 1 - a * 0.22,
+            zIndex: 10 - a,
+            pointerEvents: a > 2 ? 'none' : 'auto',
+        };
+    },
+    pick(i, event) {
+        if (i === this.active) return;
+        event.preventDefault();
+        this.active = i;
+    },
+    down(event) {
+        this.startX = event.clientX;
+    },
+    up(event) {
+        if (this.startX === null) return;
+        const dx = event.clientX - this.startX;
+        this.startX = null;
+        if (Math.abs(dx) > 40) dx < 0 ? this.next() : this.prev();
+    },
+}));
+
+/* Two-thumb price slider used by the catalogue filters. */
+Alpine.data('priceRange', (floor, ceil, min, max) => ({
+    floor,
+    ceil,
+    lo: min ?? floor,
+    hi: max ?? ceil,
+    get changed() {
+        return this.lo > this.floor || this.hi < this.ceil;
+    },
+    get left() {
+        return ((this.lo - this.floor) / Math.max(this.ceil - this.floor, 1)) * 100;
+    },
+    get right() {
+        return 100 - ((this.hi - this.floor) / Math.max(this.ceil - this.floor, 1)) * 100;
+    },
+    clamp(which) {
+        const gap = Math.max(Math.round((this.ceil - this.floor) / 40), 1);
+        this.lo = Number(this.lo);
+        this.hi = Number(this.hi);
+        if (which === 'lo' && this.lo > this.hi - gap) this.lo = this.hi - gap;
+        if (which === 'hi' && this.hi < this.lo + gap) this.hi = this.lo + gap;
     },
 }));
 
@@ -115,24 +331,55 @@ window.shareProduct = async (title, url) => {
     }
     try {
         await navigator.clipboard.writeText(url);
-        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Link copied to clipboard.' } }));
+        toast('Link copied to clipboard.');
     } catch {
         window.prompt('Copy this link', url);
     }
 };
 
+/* Keep filter and search addresses clean: empty fields are not sent. */
+document.addEventListener('formdata', (event) => {
+    if ((event.target.getAttribute('method') || 'get').toLowerCase() !== 'get') return;
+    for (const [key, value] of [...event.formData.entries()]) {
+        if (value === '') event.formData.delete(key);
+    }
+});
+
 /* Prevent double submits on slow connections. */
 document.addEventListener('submit', (event) => {
     const form = event.target;
-    if (form.dataset.once === undefined) return;
+    if (event.defaultPrevented || form.dataset.once === undefined) return;
     if (form.dataset.submitted) {
         event.preventDefault();
         return;
     }
     form.dataset.submitted = '1';
-    form.querySelectorAll('[type="submit"]').forEach((button) => button.setAttribute('aria-disabled', 'true'));
+    form.querySelectorAll('[type="submit"], button:not([type])').forEach((button) => button.setAttribute('aria-disabled', 'true'));
+});
+
+/* ==========================================================================
+   Page changes without a full reload (Turbo): links and forms are fetched in
+   the background and only the page body is swapped.
+   ========================================================================== */
+
+let started = false;
+const boot = () => {
+    started = true;
+    startMotion();
+};
+document.addEventListener('turbo:render', boot);
+// First page: start as soon as the document is parsed rather than waiting for every image to load.
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => started || boot());
+else queueMicrotask(() => started || boot());
+document.addEventListener('turbo:before-render', stopMotion);
+document.addEventListener('turbo:before-visit', () => (Alpine.store('cart').open = false));
+document.addEventListener('turbo:frame-load', (event) => refreshMotion(event.target));
+// A failed background request (offline, server error) falls back to a normal page load.
+document.addEventListener('turbo:fetch-request-error', (event) => {
+    const url = event.detail?.request?.url;
+    if (url && event.target === document.documentElement) window.location.href = url;
 });
 
 window.Alpine = Alpine;
+window.Turbo = Turbo;
 Alpine.start();
-initMotion();

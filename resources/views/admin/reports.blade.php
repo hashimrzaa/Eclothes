@@ -3,7 +3,7 @@
 @section('title', 'Reports')
 
 @section('actions')
-    <a href="{{ route('admin.reports.export', ['days' => $days]) }}" class="btn btn-outline btn-sm"><x-lucide-download class="size-4" aria-hidden="true" />Export orders (CSV)</a>
+    <a href="{{ route('admin.reports.export', ['days' => $days]) }}" data-turbo="false" class="btn btn-outline btn-sm"><x-lucide-download class="size-4" aria-hidden="true" />Export orders (CSV)</a>
 @endsection
 
 @php

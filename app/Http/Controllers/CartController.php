@@ -18,9 +18,14 @@ class CartController extends Controller
         return view('store.cart', [
             'lines' => $this->cart->lines(),
             'totals' => $this->cart->totals(),
-            'suggested' => Product::general()->purchasable()->where('price', '<=', 999)
-                ->whereNotIn('id', $this->cart->lines()->pluck('product.id'))->orderByDesc('sold_count')->limit(5)->get(),
+            'suggested' => $this->suggestions(5),
         ]);
+    }
+
+    /** Slide-over cart, fetched and refreshed without leaving the page. */
+    public function drawer()
+    {
+        return response()->json($this->state());
     }
 
     public function add(Request $request)
@@ -33,7 +38,7 @@ class CartController extends Controller
         ], ['colour.required' => 'Please choose a colour.', 'size.required' => 'Please choose a size.']);
 
         if (! $product->isPurchasable()) {
-            return back()->with('toast_error', 'Sorry, this product cannot be ordered right now.');
+            return $this->respond($request, error: 'Sorry, this product cannot be ordered right now.');
         }
 
         $this->cart->add($product, (int) ($data['qty'] ?? 1), $data['colour'] ?? null, $data['size'] ?? null);
@@ -42,7 +47,7 @@ class CartController extends Controller
             return redirect()->route('checkout');
         }
 
-        return back()->with('toast', Str::limit($product->title, 40).' added to your cart.')->with('toast_action', ['View cart', route('cart')]);
+        return $this->respond($request, Str::limit($product->title, 40).' added to your cart.', added: $product);
     }
 
     /** "Frequently bought together" — adds several products with their first available options. */
@@ -57,21 +62,21 @@ class CartController extends Controller
                 $main && $request->filled('size') && in_array($request->input('size'), $product->sizes ?? [], true) ? $request->input('size') : ($product->sizes[0] ?? null));
         }
 
-        return redirect()->route('cart')->with('toast', $products->count().' items added to your cart. You can change sizes or colours from the product page.');
+        return $this->respond($request, $products->count().' items added to your cart.');
     }
 
     public function update(Request $request, string $key)
     {
         $this->cart->update($key, $request->integer('qty'));
 
-        return back();
+        return $this->respond($request);
     }
 
-    public function remove(string $key)
+    public function remove(Request $request, string $key)
     {
         $this->cart->remove($key);
 
-        return back()->with('toast', 'Item removed from your cart.');
+        return $this->respond($request, 'Item removed from your cart.');
     }
 
     public function applyCoupon(Request $request)
@@ -92,5 +97,42 @@ class CartController extends Controller
         session()->forget('coupon');
 
         return back();
+    }
+
+    /** JSON for the cart drawer, a normal redirect for everything else. */
+    private function respond(Request $request, ?string $message = null, ?string $error = null, ?Product $added = null)
+    {
+        if ($request->expectsJson()) {
+            return response()->json($this->state($added) + ['message' => $message, 'error' => $error], $error ? 422 : 200);
+        }
+
+        $back = back();
+        if ($error) {
+            return $back->with('toast_error', $error);
+        }
+
+        return $message ? $back->with('toast', $message) : $back;
+    }
+
+    private function state(?Product $added = null): array
+    {
+        $totals = $this->cart->totals();
+
+        return [
+            'count' => $this->cart->count(),
+            'subtotal' => money($totals['subtotal']),
+            'html' => view('partials.cart-drawer', [
+                'lines' => $this->cart->lines(),
+                'totals' => $totals,
+                'added' => $added,
+                'suggested' => $this->suggestions(4),
+            ])->render(),
+        ];
+    }
+
+    private function suggestions(int $limit)
+    {
+        return Product::general()->purchasable()->where('price', '<=', 999)
+            ->whereNotIn('id', $this->cart->lines()->pluck('product.id'))->orderByDesc('sold_count')->limit($limit)->get();
     }
 }

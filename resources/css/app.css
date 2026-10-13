@@ -250,25 +250,48 @@
 }
 
 /* ==========================================================================
-   Motion layer (see resources/js/motion.js). Static layout first; the rules
-   below only prepare elements for scroll-linked and 3D animation.
+   Motion and interactive pieces (see resources/js/motion.js and app.js).
+   Static layout first; the rules below only prepare elements for animation.
    ========================================================================== */
 
-@view-transition {
-    navigation: auto;
-}
-::view-transition-old(root),
-::view-transition-new(root) {
-    animation-duration: 260ms;
-}
-
 /* Hide animated elements only until the script has taken them over (or the failsafe fires). */
-html.js-motion:not(.motion-ready) :is([data-reveal], [data-reveal-group] > *, [data-split], [data-hero-fade], [data-deck-card], [data-fan] > *, .product-card) {
+html.js-motion:not(.motion-ready) :is([data-reveal], [data-reveal-group] > *, [data-split], .product-card) {
     visibility: hidden;
 }
 
 html.lenis {
     scroll-behavior: auto;
+}
+
+/* Background page loads (Turbo): a thin bar instead of a blank screen */
+.turbo-progress-bar {
+    height: 3px;
+    background: var(--color-lime);
+    box-shadow: 0 0 12px var(--color-lime);
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 220ms;
+}
+/* Filtered results fade while the new ones are fetched */
+turbo-frame[busy] .results-grid {
+    opacity: 0.45;
+    transition: opacity 150ms ease;
+    pointer-events: none;
+}
+[aria-busy='true'].quick-add,
+button[aria-busy='true'] {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.skeleton {
+    background: linear-gradient(100deg, var(--color-sunken) 30%, var(--color-line) 50%, var(--color-sunken) 70%);
+    background-size: 200% 100%;
+    animation: skeleton 1.2s ease-in-out infinite;
+}
+@keyframes skeleton {
+    to { background-position: -200% 0; }
 }
 
 .word {
@@ -282,29 +305,37 @@ html.lenis {
     display: inline-block;
     will-change: transform;
 }
-.is-scrub .word {
-    overflow: visible;
-}
 
-/* Header: glass on scroll, slides away going down */
+/* Header: slides away on the way down, returns at the top of the page */
 [data-header] {
-    transition: transform 480ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 300ms ease, box-shadow 300ms ease;
-}
-[data-header].is-scrolled {
-    background-color: rgb(255 255 255 / 0.8);
-    backdrop-filter: blur(18px) saturate(1.7);
-    -webkit-backdrop-filter: blur(18px) saturate(1.7);
-    box-shadow: 0 10px 30px -18px rgb(13 20 18 / 0.25);
+    transition: transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 [data-header].is-hidden {
-    transform: translateY(-100%);
+    transform: translateY(-101%);
 }
 [data-scroll-progress] {
     transform: scaleX(0);
     transform-origin: 0 50%;
 }
+.nav-link::after {
+    content: '';
+    position: absolute;
+    right: 0.75rem;
+    bottom: 0;
+    left: 0.75rem;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--color-night);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.nav-link:hover::after,
+.nav-link.is-open::after {
+    transform: scaleX(1);
+}
 
-/* Hero */
+/* Dark stage used by the showcase and promo panels */
 .hero {
     background:
         radial-gradient(90% 70% at 85% 10%, rgb(11 107 79 / 0.55), transparent 60%),
@@ -319,41 +350,39 @@ html.lenis {
 .glow {
     border-radius: 9999px;
     filter: blur(70px);
-    will-change: transform;
 }
 
-.deck-stage {
-    perspective: 94rem;
+/* Homepage showcase: 3D carousel */
+.showcase-stage {
+    --step: 9.5rem;
+    perspective: 70rem;
     transform-style: preserve-3d;
 }
-.deck {
-    --spread: 1;
-    transform-style: preserve-3d;
-    transform: rotateX(10deg) rotateY(-22deg);
-    will-change: transform;
-}
-.deck-card {
+.showcase-card {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 13.5rem;
-    margin: -9.5rem 0 0 -6.75rem;
-    transform-style: preserve-3d;
-    transform: translate3d(calc(var(--x) * var(--spread)), calc(var(--y) * var(--spread)), calc(var(--z) * var(--spread))) rotateZ(var(--r));
+    width: 13rem;
+    aspect-ratio: 4 / 5;
+    margin: -8.125rem 0 0 -6.5rem;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    background: var(--color-sunken);
+    box-shadow: 0 2.5rem 5rem -1.75rem rgb(0 0 0 / 0.85), 0 0 0 1px rgb(255 255 255 / 0.14);
+    transition: transform 800ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 600ms ease, box-shadow 300ms ease;
+    will-change: transform, opacity;
+    -webkit-user-drag: none;
 }
-.deck-card > *,
-.deck-card > * > * {
-    display: block;
-    transform-style: preserve-3d;
+.showcase-card[aria-hidden='false'] {
+    box-shadow: 0 3rem 6rem -1.75rem rgb(0 0 0 / 0.9), 0 0 0 2px var(--color-lime);
 }
-.deck-face {
-    border-radius: 1.375rem;
-    background: rgb(255 255 255 / 0.96);
-    box-shadow: 0 40px 80px -30px rgb(0 0 0 / 0.75), 0 0 0 1px rgb(255 255 255 / 0.12);
-    transition: box-shadow 300ms ease;
+@media (min-width: 640px) {
+    .showcase-stage { --step: 11.5rem; }
+    .showcase-card { width: 15rem; margin: -9.375rem 0 0 -7.5rem; }
 }
-.deck-face:hover {
-    box-shadow: 0 50px 90px -28px rgb(0 0 0 / 0.85), 0 0 0 2px var(--color-lime);
+@media (min-width: 1024px) {
+    .showcase-stage { --step: 14.5rem; mask-image: linear-gradient(to right, transparent 0, #000 22%); }
+    .showcase-card { width: 19.5rem; margin: -12.1875rem 0 0 -9.75rem; border-radius: 1.75rem; }
 }
 
 /* Marquee */
@@ -366,31 +395,9 @@ html.lenis {
     will-change: transform;
 }
 
-/* Horizontal gallery: native swipe by default, scroll-driven when pinned */
-[data-hscroll-track] {
-    display: flex;
-    gap: 1.25rem;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-}
-[data-hscroll-track]::-webkit-scrollbar {
-    display: none;
-}
-[data-hscroll-track] > * {
-    scroll-snap-align: start;
-}
-.is-pinned [data-hscroll-track] {
-    width: max-content;
-    overflow: visible;
-    scroll-snap-type: none;
-    will-change: transform;
-}
-
 /* Pointer tilt */
 [data-tilt] {
     transform-style: preserve-3d;
-    will-change: transform;
 }
 .tilt-glare::after {
     content: '';
@@ -408,6 +415,63 @@ html.lenis {
     opacity: 1;
 }
 
+/* Two-thumb price slider: two range inputs sharing one track */
+.range-dual {
+    position: relative;
+    height: 1.5rem;
+}
+.range-dual::before,
+.range-dual-fill {
+    content: '';
+    position: absolute;
+    top: 50%;
+    height: 0.25rem;
+    margin-top: -0.125rem;
+    border-radius: 9999px;
+}
+.range-dual::before {
+    right: 0;
+    left: 0;
+    background: var(--color-line-strong);
+}
+.range-dual-fill {
+    background: var(--color-primary);
+}
+.range-dual input[type='range'] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    margin: 0;
+    background: none;
+    pointer-events: none;
+    appearance: none;
+    -webkit-appearance: none;
+}
+.range-dual input[type='range']::-webkit-slider-thumb {
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 2px solid var(--color-primary);
+    border-radius: 9999px;
+    background: #fff;
+    box-shadow: var(--shadow-e1);
+    cursor: grab;
+    pointer-events: auto;
+    appearance: none;
+    -webkit-appearance: none;
+}
+.range-dual input[type='range']::-moz-range-thumb {
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid var(--color-primary);
+    border-radius: 9999px;
+    background: #fff;
+    cursor: grab;
+    pointer-events: auto;
+}
+.range-dual input[type='range']::-moz-range-track {
+    background: none;
+}
+
 @layer components {
     .eyebrow {
         @apply inline-flex items-center gap-2 text-xs font-semibold tracking-[0.18em] text-primary uppercase;
@@ -421,32 +485,5 @@ html.lenis {
     }
     .display {
         @apply font-display leading-[0.95] font-extrabold tracking-[-0.03em];
-    }
-}
-
-/* Phone hero: three product cards fanned out like a hand of cards */
-.fan {
-    --fan: 1;
-    position: relative;
-    height: 15.75rem;
-}
-.fan-card {
-    position: absolute;
-    bottom: 1.25rem;
-    left: 50%;
-    width: 9.25rem;
-    margin-left: -4.625rem;
-    transform-origin: 50% 130%;
-    transform: translate(calc(var(--tx) * var(--fan)), calc(var(--ty) * var(--fan))) rotate(calc(var(--rot) * var(--fan)));
-}
-.fan-card > *,
-.fan-card > * > * {
-    display: block;
-}
-
-/* Tablet: the fan sits beside the headline, so it rests inside the card instead of on its bottom edge */
-@media (min-width: 768px) {
-    .fan-card {
-        bottom: 0.5rem;
     }
 }

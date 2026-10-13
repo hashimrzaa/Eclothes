@@ -110,7 +110,7 @@
                     <p class="mt-4 text-[0.9375rem] text-ink-2">{{ $product->short_description }}</p>
                 @endif
 
-                <form id="buy-form" method="post" action="{{ route('cart.add') }}" class="mt-6 space-y-6" data-once
+                <form id="buy-form" method="post" action="{{ route('cart.add') }}" class="mt-6 space-y-6" data-cart-form
                     x-data="{ colour: @js(old('colour', count($colours) === 1 ? $colours[0] : null)), size: @js(old('size', count($sizes) === 1 ? $sizes[0] : null)), qty: 1, max: {{ max(1, min($product->stock_qty, \App\Services\Cart::MAX_PER_LINE)) }} }">
                     @csrf
                     <input type="hidden" name="product_id" value="{{ $product->id }}">
@@ -236,7 +236,7 @@
             @php $bundle = collect([$product])->concat($together); @endphp
             <section class="mt-16" aria-labelledby="fbt-title">
                 <h2 id="fbt-title" class="display text-3xl sm:text-4xl" data-split>Frequently bought together</h2>
-                <form method="post" action="{{ route('cart.bundle') }}" class="card mt-5 flex flex-col gap-6 p-5 lg:flex-row lg:items-center"
+                <form method="post" action="{{ route('cart.bundle') }}" data-cart-form class="card mt-5 flex flex-col gap-6 p-5 lg:flex-row lg:items-center"
                     x-data="{ picked: @js($bundle->pluck('id')), prices: @js($bundle->pluck('price', 'id')), get total() { return this.picked.reduce((sum, id) => sum + this.prices[id], 0) } }">
                     @csrf
                     <input type="hidden" name="product_id" value="{{ $product->id }}">

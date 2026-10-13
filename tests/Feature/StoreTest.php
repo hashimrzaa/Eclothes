@@ -133,4 +133,68 @@ class StoreTest extends TestCase
         // Skipping steps is rejected.
         $this->actingAs($owner)->patch('/admin/orders/'.$order->id, ['status' => 'delivered'])->assertSessionHasErrors('status');
     }
+
+    public function test_cart_can_be_updated_in_the_background(): void
+    {
+        $product = $this->sellable();
+
+        $this->postJson('/cart', $this->cartPayload($product))
+            ->assertOk()->assertJsonPath('count', 1)->assertJsonStructure(['count', 'subtotal', 'html', 'message']);
+        $this->getJson('/cart/drawer')->assertOk()->assertJsonPath('count', 1);
+
+        // Missing options come back as a readable error instead of a redirect.
+        $withOptions = Product::general()->purchasable()->get()->first(fn ($p) => $p->sizes);
+        $this->postJson('/cart', ['product_id' => $withOptions->id])->assertStatus(422);
+    }
+
+    public function test_search_matches_every_word_across_title_colour_and_category(): void
+    {
+        $product = Product::general()->where('title', 'like', '%Kurti%')->firstOrFail();
+        $colour = strtolower($product->colours[0]);
+
+        $this->get('/search?q='.urlencode("kurti $colour"))->assertOk()->assertSee($product->title);
+        $this->get('/search?q='.urlencode('kurtis'))->assertSee($product->title); // plural
+        $this->get('/search?q=zzzzqqq')->assertOk()->assertSee('Nothing found');
+        $this->getJson('/search/suggest?q=kurti')->assertOk()->assertJsonStructure(['products' => [['title', 'price', 'url', 'image']], 'categories']);
+    }
+
+    public function test_admin_can_add_and_rename_categories_but_not_delete_them(): void
+    {
+        $owner = User::where('role', 'owner')->first();
+        $women = Category::where('path', 'women')->first();
+        $group = Category::where('path', 'women/womens-clothing')->first();
+
+        $this->actingAs($owner)->post('/admin/categories', ['name' => 'Footwear', 'icon' => 'footprints'])->assertSessionHasNoErrors();
+        $this->actingAs($owner)->post('/admin/categories', ['name' => 'Co-ord Sets', 'parent_id' => $group->id])->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('categories', ['path' => 'footwear', 'depth' => 0, 'icon' => 'footprints']);
+        $this->assertDatabaseHas('categories', ['path' => 'women/womens-clothing/co-ord-sets', 'depth' => 2]);
+        $this->get('/c/women/womens-clothing/co-ord-sets')->assertOk();
+
+        // Renaming keeps the address.
+        $this->actingAs($owner)->patch('/admin/categories/'.$women->id, ['name' => 'Ladies'])->assertSessionHasNoErrors();
+        $this->assertSame('women', $women->fresh()->path);
+        $this->get('/c/women')->assertOk()->assertSee('Ladies');
+
+        $this->actingAs($owner)->delete('/admin/categories/'.$women->id)->assertStatus(405);
+    }
+
+    public function test_homepage_sections_and_store_settings_are_managed_from_admin(): void
+    {
+        $owner = User::where('role', 'owner')->first();
+        $rail = \App\Models\HomeSection::where('kind', 'rail')->where('source', 'new')->firstOrFail();
+
+        $this->get('/')->assertOk()->assertSee($rail->title);
+        $this->actingAs($owner)->put('/admin/homepage/'.$rail->id, ['title' => 'Fresh this week', 'source' => 'new', 'item_limit' => 4, 'is_active' => 1])->assertSessionHasNoErrors();
+        $this->get('/')->assertSee('Fresh this week');
+        $this->actingAs($owner)->put('/admin/homepage/'.$rail->id, ['title' => 'Fresh this week', 'source' => 'new', 'is_active' => 0])->assertSessionHasNoErrors();
+        $this->get('/')->assertDontSee('Fresh this week');
+
+        $settings = collect(\App\Models\Setting::FIELDS)->mapWithKeys(fn ($f, $key) => [$key => config($f[0])])->all();
+        $this->actingAs($owner)->put('/admin/settings', ['name' => 'Bazaar One', 'shipping_fee' => 250] + $settings)->assertSessionHasNoErrors();
+        \App\Models\Setting::applyToConfig();
+        $this->assertSame('Bazaar One', config('store.name'));
+        $this->assertSame(250, config('store.shipping_fee'));
+        $this->get('/admin/settings')->assertOk();
+        $this->get('/admin/homepage')->assertOk();
+    }
 }

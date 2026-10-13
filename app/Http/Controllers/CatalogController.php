@@ -53,12 +53,31 @@ class CatalogController extends Controller
 
         return response()->json([
             'categories' => Category::where('name', 'like', $like)->where('is_visible', true)->where('is_restricted', false)
-                ->orderBy('depth')->limit(4)->get()
+                ->where('kind', 'normal')->orderBy('depth')->limit(4)->get()
                 ->map(fn ($c) => ['name' => $c->name, 'context' => $c->depth ? ucwords(str_replace('-', ' ', $c->department_slug)) : 'Department', 'url' => $c->url]),
-            'products' => Product::general()->where(fn ($w) => $w->where('title', 'like', $like)->orWhere('brand', 'like', $like))
-                ->orderByDesc('sold_count')->limit(6)->get()
-                ->map(fn ($p) => ['title' => $p->title, 'price' => money($p->price), 'url' => $p->url, 'image' => $p->image_urls[0] ?? null]),
+            'products' => $this->matching(Product::general(), $q)->orderByDesc('sold_count')->limit(6)->get()
+                ->map(fn ($p) => ['title' => $p->title, 'price' => money($p->price), 'was' => $p->on_sale ? money($p->compare_at_price) : null, 'url' => $p->url, 'image' => $p->image_urls[0] ?? null, 'brand' => $p->brand]),
         ]);
+    }
+
+    /**
+     * Every word must match somewhere: title, brand, SKU, material, a category name or a
+     * filter value such as colour or size — so "black kurti" and "kurti black" both work.
+     */
+    private function matching(Builder $query, string $q): Builder
+    {
+        $terms = array_slice(array_filter(preg_split('/\s+/', mb_strtolower($q))), 0, 6);
+        foreach ($terms as $term) {
+            // Forgive simple plurals: "bags" also finds "bag".
+            $stem = mb_strlen($term) > 3 ? preg_replace('/(es|s)$/', '', $term) : $term;
+            $like = '%'.addcslashes($stem, '%_').'%';
+            $query->where(fn ($w) => $w->where('title', 'like', $like)->orWhere('brand', 'like', $like)
+                ->orWhere('sku', 'like', $like)->orWhere('material', 'like', $like)
+                ->orWhereHas('categories', fn ($c) => $c->where('name', 'like', $like))
+                ->orWhereHas('attributeValues', fn ($a) => $a->where('value', 'like', $like)));
+        }
+
+        return $query;
     }
 
     private function listing(Request $request, ?Category $category, ?string $q, array $trail = [])
@@ -82,9 +101,7 @@ class CatalogController extends Controller
             }
         }
         if ($q !== null && $q !== '') {
-            $like = '%'.addcslashes($q, '%_').'%';
-            $base->where(fn ($w) => $w->where('title', 'like', $like)->orWhere('brand', 'like', $like)->orWhere('sku', 'like', $like)
-                ->orWhereHas('categories', fn ($c) => $c->where('name', 'like', $like)));
+            $this->matching($base, $q);
         }
 
         // Facets are computed on the unfiltered set so options never disappear while refining.
@@ -136,6 +153,10 @@ class CatalogController extends Controller
             'sort' => $sort,
             'activeCount' => $activeCount,
             'showFashionToggles' => in_array($set, ['fashion', 'all'], true),
+            'suggested' => $products->isEmpty() || $q === ''
+                ? Product::general()->purchasable()->orderByDesc('sold_count')->limit(10)->get() : collect(),
+            'popular' => $q !== null ? Category::where('depth', 2)->where('kind', 'normal')->where('is_visible', true)->where('is_restricted', false)
+                ->withCount('products')->orderByDesc('products_count')->limit(10)->get() : collect(),
             'title' => $q !== null ? ($q === '' ? 'Search' : "Results for “{$q}”") : ($category?->name ?? 'Shop All'),
         ]);
     }

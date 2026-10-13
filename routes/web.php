@@ -23,6 +23,7 @@ Route::get('/p/{slug}', [ProductController::class, 'show'])->name('product.show'
 Route::post('/p/{product}/reviews', [ProductController::class, 'review'])->name('product.review')->middleware('throttle:forms');
 
 Route::get('/cart', [CartController::class, 'index'])->name('cart');
+Route::get('/cart/drawer', [CartController::class, 'drawer'])->name('cart.drawer');
 Route::post('/cart', [CartController::class, 'add'])->name('cart.add');
 Route::post('/cart/bundle', [CartController::class, 'addMany'])->name('cart.bundle');
 Route::patch('/cart/{key}', [CartController::class, 'update'])->name('cart.update');
@@ -76,6 +77,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
 
     Route::middleware('staff:categories')->group(function () {
         Route::get('/categories', [Admin\SupplyController::class, 'categories'])->name('categories.index');
+        Route::post('/categories', [Admin\SupplyController::class, 'storeCategory'])->name('categories.store');
         Route::patch('/categories/{category}', [Admin\SupplyController::class, 'updateCategory'])->name('categories.update');
     });
 
@@ -120,6 +122,19 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
     Route::middleware('staff:reports')->group(function () {
         Route::get('/reports', [Admin\OpsController::class, 'reports'])->name('reports.index');
         Route::get('/reports/orders.csv', [Admin\OpsController::class, 'exportOrders'])->name('reports.export');
+    });
+
+    Route::middleware('staff:homepage')->group(function () {
+        Route::get('/homepage', [Admin\SiteController::class, 'homepage'])->name('homepage.index');
+        Route::post('/homepage', [Admin\SiteController::class, 'storeSection'])->name('homepage.store');
+        Route::put('/homepage/{section}', [Admin\SiteController::class, 'updateSection'])->name('homepage.update');
+        Route::post('/homepage/{section}/move', [Admin\SiteController::class, 'moveSection'])->name('homepage.move');
+        Route::delete('/homepage/{section}', [Admin\SiteController::class, 'destroySection'])->name('homepage.destroy');
+    });
+
+    Route::middleware('staff:settings')->group(function () {
+        Route::get('/settings', [Admin\SiteController::class, 'settings'])->name('settings.index');
+        Route::put('/settings', [Admin\SiteController::class, 'updateSettings'])->name('settings.update');
     });
 
     Route::middleware('staff:staff')->group(function () {

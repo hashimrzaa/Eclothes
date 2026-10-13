@@ -67,8 +67,10 @@ return [
         'coupons' => ['Coupons', 'ticket', 'Marketing'],
         'reviews' => ['Reviews', 'star', 'Marketing'],
         'banners' => ['Content banners', 'image', 'Marketing'],
+        'homepage' => ['Homepage', 'layout-template', 'Marketing'],
         'reports' => ['Reports', 'chart-column', 'Insights'],
         'staff' => ['Staff & permissions', 'shield-check', 'Insights'],
+        'settings' => ['Store settings', 'settings', 'Insights'],
     ],
 
     // Spec §10 — filters shown per department. Keys match product_attributes.key.

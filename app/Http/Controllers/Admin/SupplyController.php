@@ -138,7 +138,42 @@ class SupplyController extends Controller
         return view('admin.categories', [
             'departments' => Category::where('depth', 0)->orderBy('position')->with('children.children')->get(),
             'counts' => $counts,
+            'icons' => self::ICONS,
         ]);
+    }
+
+    public const ICONS = ['shirt', 'baby', 'handbag', 'cooking-pot', 'plug-zap', 'wrench', 'flame', 'tag', 'gem', 'watch', 'footprints', 'sofa', 'sparkles', 'gift', 'book-open', 'dumbbell', 'car', 'paw-print', 'palette', 'smartphone'];
+
+    public function storeCategory(Request $request)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:80'],
+            'parent_id' => ['nullable', Rule::exists('categories', 'id')->where(fn ($q) => $q->where('depth', '<', 2)->where('kind', 'normal'))],
+            'icon' => ['nullable', Rule::in(self::ICONS)],
+        ], ['parent_id.exists' => 'Choose a department or group to add this category to.']);
+
+        $parent = isset($data['parent_id']) ? Category::find($data['parent_id']) : null;
+        $slug = \Illuminate\Support\Str::slug($data['name']) ?: 'category';
+        $base = $parent ? $parent->path.'/' : '';
+        for ($i = 2, $candidate = $slug; Category::where('path', $base.$candidate)->exists(); $i++) {
+            $candidate = $slug.'-'.$i;
+        }
+
+        Category::create([
+            'parent_id' => $parent?->id,
+            'name' => $data['name'],
+            'slug' => $candidate,
+            'path' => $base.$candidate,
+            'depth' => $parent ? $parent->depth + 1 : 0,
+            'position' => (int) Category::where('parent_id', $parent?->id)->max('position') + 1,
+            'kind' => 'normal',
+            'icon' => $parent ? null : ($data['icon'] ?? 'tag'),
+            'priority' => $parent ? null : 'Medium',
+            'phase' => $parent?->phase ?? 1,
+            'is_restricted' => $parent?->is_restricted ?? false,
+        ]);
+
+        return back()->with('toast', "{$data['name']} added".($parent ? " under {$parent->name}." : ' as a new department.'));
     }
 
     public function updateCategory(Request $request, Category $category)
@@ -147,7 +182,9 @@ class SupplyController extends Controller
             'name' => ['sometimes', 'required', 'string', 'max:80'],
             'is_visible' => ['sometimes', 'boolean'],
             'priority' => ['sometimes', 'nullable', Rule::in(['High', 'Medium', 'Low'])],
+            'icon' => ['sometimes', 'nullable', Rule::in(self::ICONS)],
         ]);
+        // Only the display name changes: the web address stays the same so existing links keep working.
         $category->update($data);
 
         return back()->with('toast', "{$category->name} updated.");

@@ -1,4 +1,20 @@
-<footer class="mt-24 border-t border-line bg-surface lg:mt-36">
+<footer class="mt-14 border-t border-line bg-surface lg:mt-20">
+    {{-- Trust strip: COD / easy exchange / support --}}
+    <div class="border-b border-line">
+        <ul class="container-page grid grid-cols-2 gap-x-6 gap-y-4 py-6 lg:grid-cols-4">
+            @foreach ([
+                ['banknote', 'Cash on Delivery', 'Pay at your door'],
+                ['truck', 'Nationwide delivery', implode('–', config('store.delivery_days')).' working days'],
+                ['refresh-ccw', '7-day easy exchange', 'Wrong size? We fix it'],
+                ['headset', 'WhatsApp support', 'Real people, every order'],
+            ] as [$icon, $heading, $text])
+                <li class="flex items-center gap-3">
+                    <span class="grid size-10 shrink-0 place-items-center rounded-full bg-night text-lime">@svg('lucide-'.$icon, 'size-[1.125rem]', ['aria-hidden' => 'true'])</span>
+                    <span class="leading-tight"><span class="block text-sm font-semibold">{{ $heading }}</span><span class="block text-[0.8125rem] text-muted">{{ $text }}</span></span>
+                </li>
+            @endforeach
+        </ul>
+    </div>
     <div class="container-page grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div>
             <a href="{{ route('home') }}" class="flex items-center gap-2">
@@ -51,9 +67,6 @@
                 <li><a href="{{ route('wishlist') }}" class="hover:text-primary">Wishlist</a></li>
             </ul>
         </nav>
-    </div>
-    <div class="container-page overflow-hidden" aria-hidden="true">
-        <p class="display -mb-[0.16em] text-center text-[clamp(4rem,21vw,19rem)] leading-none text-ink/[0.06] select-none" data-parallax="-14">{{ config('store.name') }}</p>
     </div>
     <div class="border-t border-line">
         <div class="container-page flex flex-col items-center justify-between gap-3 py-5 text-[0.8125rem] text-muted sm:flex-row">

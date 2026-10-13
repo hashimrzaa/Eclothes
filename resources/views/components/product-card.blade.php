@@ -2,6 +2,8 @@
 @php
     $availability = $product->availability;
     $saved = in_array($product->id, session('wishlist', []), true);
+    $canBuy = in_array($availability, ['in_stock', 'low_stock'], true);
+    $hasOptions = $product->colours || $product->sizes;
 @endphp
 <article {{ $attributes->class('product-card group relative flex flex-col') }}>
     <div data-tilt class="tilt-glare relative aspect-[4/5] overflow-hidden rounded-card bg-sunken">
@@ -19,17 +21,26 @@
             @endif
         </div>
 
-        @if ($availability !== 'sold_out')
-            <span class="pointer-events-none absolute inset-x-3 bottom-3 z-[6] hidden translate-y-3 items-center justify-center gap-1.5 rounded-full bg-night/90 py-2.5 text-[0.8125rem] font-semibold text-white opacity-0 backdrop-blur transition duration-300 group-hover:translate-y-0 group-hover:opacity-100 lg:flex" aria-hidden="true">
-                View product <x-lucide-arrow-up-right class="size-4" />
-            </span>
-        @endif
-
         <button type="button" x-data="wishlistButton('{{ route('wishlist.toggle', $product) }}', {{ $saved ? 'true' : 'false' }})" @click="toggle"
             :aria-pressed="active.toString()" :aria-label="active ? 'Remove from wishlist' : 'Save to wishlist'"
             class="absolute top-1.5 right-1.5 z-10 grid size-10 place-items-center rounded-full bg-surface/90 text-ink-2 shadow-e1 backdrop-blur transition-colors hover:text-accent">
             <x-lucide-heart class="size-[1.125rem]" ::class="active && 'fill-accent text-accent'" aria-hidden="true" />
         </button>
+
+        {{-- One-tap add when there is nothing to choose; otherwise go and pick a size or colour --}}
+        @if ($canBuy && ! $hasOptions)
+            <form method="post" action="{{ route('cart.add') }}" data-cart-form class="absolute right-2 bottom-2 z-10">
+                @csrf
+                <input type="hidden" name="product_id" value="{{ $product->id }}">
+                <button class="quick-add grid size-11 place-items-center rounded-full bg-night text-white shadow-e2 transition duration-300 hover:scale-110 hover:bg-primary" aria-label="Add {{ $product->title }} to cart" title="Add to cart">
+                    <x-lucide-plus class="size-5" aria-hidden="true" />
+                </button>
+            </form>
+        @elseif ($canBuy)
+            <a href="{{ $product->url }}" class="quick-add absolute right-2 bottom-2 z-10 grid size-11 place-items-center rounded-full bg-surface text-ink shadow-e2 transition duration-300 hover:scale-110 hover:bg-night hover:text-white" aria-label="Choose options for {{ $product->title }}" title="Choose options">
+                <x-lucide-shopping-bag class="size-[1.125rem]" aria-hidden="true" />
+            </a>
+        @endif
     </div>
 
     <div class="flex flex-1 flex-col px-0.5 pt-3">

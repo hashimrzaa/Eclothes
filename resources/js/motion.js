@@ -6,65 +6,81 @@ import 'lenis/dist/lenis.css';
 gsap.registerPlugin(ScrollTrigger);
 
 /*
- | Storefront motion layer: smooth scrolling, scroll-linked 3D and reveals.
- | Everything here is progressive enhancement — the page is complete without it, and
- | visitors who ask for reduced motion get the static layout.
+ | Storefront motion layer: smooth scrolling, scroll reveals and pointer tilt.
+ | Pages are swapped without a reload (Turbo), so everything created here is torn down
+ | before the next page renders and set up again afterwards.
+ | It is progressive enhancement: visitors who ask for reduced motion get the static layout.
  */
-export function initMotion() {
-    const root = document.documentElement;
+
+const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+let lenis = null;
+let media = null;
+let extras = [];
+
+export function startMotion() {
+    stopMotion();
+    document.documentElement.classList.add('motion-ready');
+    window.__motionReady = true;
     if (!document.body.hasAttribute('data-motion')) return;
 
-    const mm = gsap.matchMedia();
-    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-
-    mm.add('(prefers-reduced-motion: no-preference)', () => {
-        smoothScroll(finePointer);
+    smoothScroll();
+    media = gsap.matchMedia();
+    media.add('(prefers-reduced-motion: no-preference)', () => {
         header();
         progressBar();
-        splitHeadings();
-        reveals();
+        splitHeadings(document);
+        reveals(document);
         counters();
         marquee();
-        heroDeck(finePointer);
-        phoneFan();
-        scrubText();
         parallax();
-        if (finePointer) tilt();
+        if (finePointer) return tilt(document);
     });
-
-    // Layout-dependent scenes are rebuilt when the breakpoint changes.
-    mm.add('(prefers-reduced-motion: no-preference) and (min-width: 1024px)', () => horizontalGallery());
-
-    window.__motionReady = true;
-    root.classList.add('motion-ready');
-    window.addEventListener('load', () => ScrollTrigger.refresh());
+    lenis?.resize();
+    ScrollTrigger.refresh();
 }
 
-/* ---------- Smooth scroll ---------- */
+export function stopMotion() {
+    extras.forEach((ctx) => ctx.revert());
+    extras = [];
+    media?.revert();
+    media = null;
+}
 
-function smoothScroll(finePointer) {
+/** Content swapped in place (filtered results, more products) gets the same entrance. */
+export function refreshMotion(root) {
+    if (reduced.matches || !document.body.hasAttribute('data-motion')) return;
+    let cleanup;
+    const ctx = gsap.context(() => {
+        splitHeadings(root);
+        reveals(root);
+        if (finePointer) cleanup = tilt(root);
+    });
+    ctx.add(() => cleanup);
+    extras.push({ revert: () => { cleanup?.(); ctx.revert(); } });
+    lenis?.resize();
+    ScrollTrigger.refresh();
+}
+
+/* ---------- Smooth scroll (created once, survives page swaps) ---------- */
+
+function smoothScroll() {
     // Touch devices already scroll smoothly; hijacking them only adds latency.
-    if (!finePointer) return;
+    if (lenis || !finePointer || reduced.matches) return;
 
-    const lenis = new Lenis({
-        lerp: 0.11,
-        anchors: { offset: -120 },
-        // Leave scrolling to open drawers, sheets and dialogs.
+    lenis = new Lenis({
+        lerp: 0.12,
+        anchors: { offset: -24 },
+        // Leave scrolling to open drawers, sheets, dialogs and dropdown panels.
         prevent: (node) => !!node.closest('[data-lenis-prevent], [role="dialog"], [role="listbox"]'),
     });
     lenis.on('scroll', ScrollTrigger.update);
-    const tick = (time) => lenis.raf(time * 1000);
-    gsap.ticker.add(tick);
+    gsap.ticker.add((time) => lenis.raf(time * 1000));
     gsap.ticker.lagSmoothing(0);
     window.__lenis = lenis;
-
-    return () => {
-        gsap.ticker.remove(tick);
-        lenis.destroy();
-    };
 }
 
-/* ---------- Header: gets out of the way on the way down, returns on the way up ---------- */
+/* ---------- Header: leaves as soon as you scroll down, returns only at the very top ---------- */
 
 function header() {
     const el = document.querySelector('[data-header]');
@@ -74,11 +90,12 @@ function header() {
         end: 'max',
         onUpdate(self) {
             const y = self.scroll();
-            el.classList.toggle('is-scrolled', y > 24);
             const busy = el.querySelector('[aria-expanded="true"]') || el.contains(document.activeElement);
-            el.classList.toggle('is-hidden', self.direction === 1 && y > 420 && !busy);
+            if (y <= 8 || busy) el.classList.remove('is-hidden');
+            else if (self.direction === 1 && y > 140) el.classList.add('is-hidden');
         },
     });
+    return () => el.classList.remove('is-hidden');
 }
 
 function progressBar() {
@@ -110,56 +127,54 @@ function splitWords(el) {
     return inner;
 }
 
-function splitHeadings() {
-    gsap.utils.toArray('[data-split]').forEach((el) => {
+function splitHeadings(root) {
+    gsap.utils.toArray('[data-split]', root).forEach((el) => {
         const words = splitWords(el);
         gsap.set(el, { autoAlpha: 1 });
         gsap.from(words, {
             yPercent: 115,
             rotate: 4,
-            duration: 0.9,
+            duration: 0.8,
             ease: 'power4.out',
-            stagger: 0.045,
+            stagger: 0.04,
             delay: Number(el.dataset.delay || 0),
-            scrollTrigger: { trigger: el, start: 'top 90%', once: true },
+            scrollTrigger: { trigger: el, start: 'top 94%', once: true },
         });
     });
 }
 
 /* ---------- Reveals ---------- */
 
-function reveals() {
-    // Single blocks
-    gsap.utils.toArray('[data-reveal]').forEach((el) => {
-        gsap.fromTo(el, { autoAlpha: 0, y: 36 }, {
-            autoAlpha: 1, y: 0, duration: 0.9, ease: 'power3.out', delay: Number(el.dataset.delay || 0),
-            scrollTrigger: { trigger: el, start: 'top 90%', once: true },
+function reveals(root) {
+    gsap.utils.toArray('[data-reveal]', root).forEach((el) => {
+        gsap.fromTo(el, { autoAlpha: 0, y: 28 }, {
+            autoAlpha: 1, y: 0, duration: 0.8, ease: 'power3.out', delay: Number(el.dataset.delay || 0),
+            scrollTrigger: { trigger: el, start: 'top 94%', once: true },
         });
     });
 
     // Product cards tip up into place in rows, wherever they appear.
-    const cards = gsap.utils.toArray('.product-card');
+    const cards = gsap.utils.toArray('.product-card', root);
     if (cards.length) {
-        gsap.set(cards, { autoAlpha: 0, y: 48, rotateX: -14, transformPerspective: 900, transformOrigin: '50% 100%' });
+        gsap.set(cards, { autoAlpha: 0, y: 40, rotateX: -12, transformPerspective: 900, transformOrigin: '50% 100%' });
         ScrollTrigger.batch(cards, {
-            start: 'top 94%',
+            start: 'top 97%',
             once: true,
             onEnter: (batch) => gsap.to(batch, {
-                autoAlpha: 1, y: 0, rotateX: 0, duration: 0.85, ease: 'power3.out', stagger: 0.07, overwrite: true,
+                autoAlpha: 1, y: 0, rotateX: 0, duration: 0.7, ease: 'power3.out', stagger: 0.05, overwrite: true,
                 clearProps: 'transform,transformPerspective',
             }),
         });
     }
 
-    // Any other group of siblings
-    gsap.utils.toArray('[data-reveal-group]').forEach((group) => {
+    gsap.utils.toArray('[data-reveal-group]', root).forEach((group) => {
         const items = [...group.children];
-        gsap.set(items, { autoAlpha: 0, y: 32 });
+        gsap.set(items, { autoAlpha: 0, y: 26 });
         ScrollTrigger.create({
             trigger: group,
-            start: 'top 88%',
+            start: 'top 94%',
             once: true,
-            onEnter: () => gsap.to(items, { autoAlpha: 1, y: 0, duration: 0.8, ease: 'power3.out', stagger: 0.08 }),
+            onEnter: () => gsap.to(items, { autoAlpha: 1, y: 0, duration: 0.7, ease: 'power3.out', stagger: 0.06 }),
         });
     });
 }
@@ -181,13 +196,14 @@ function counters() {
 function marquee() {
     gsap.utils.toArray('[data-marquee]').forEach((el) => {
         const track = el.firstElementChild;
-        if (!track) return;
+        if (!track || track.dataset.cloned) return;
+        track.dataset.cloned = '1';
         track.append(...[...track.children].map((node) => {
             const copy = node.cloneNode(true);
             copy.setAttribute('aria-hidden', 'true');
             return copy;
         }));
-        const loop = gsap.to(track, { xPercent: -50, duration: 32, ease: 'none', repeat: -1 });
+        const loop = gsap.to(track, { xPercent: -50, duration: 34, ease: 'none', repeat: -1 });
         const skew = gsap.quickTo(track, 'skewX', { duration: 0.5, ease: 'power3.out' });
         ScrollTrigger.create({
             trigger: el,
@@ -196,125 +212,9 @@ function marquee() {
             onUpdate(self) {
                 const v = gsap.utils.clamp(-1, 1, self.getVelocity() / 1800);
                 loop.timeScale(1 + Math.abs(v) * 3.5);
-                skew(v * -10);
+                skew(v * -8);
             },
-            onLeave: () => loop.pause(),
-            onEnterBack: () => loop.play(),
-            onLeaveBack: () => loop.pause(),
-            onEnter: () => loop.play(),
-        });
-    });
-}
-
-/* ---------- Hero: a deck of real products floating in 3D ---------- */
-
-function heroDeck(finePointer) {
-    const hero = document.querySelector('[data-hero]');
-    const deck = hero?.querySelector('[data-deck]');
-    if (!hero || !hero.offsetParent) return;
-
-    gsap.from(hero.querySelectorAll('[data-hero-fade]'), { autoAlpha: 0, y: 28, duration: 0.9, ease: 'power3.out', stagger: 0.09, delay: 0.35 });
-    gsap.to(hero.querySelectorAll('[data-glow]'), { x: 'random(-60, 60)', y: 'random(-40, 40)', scale: 'random(0.9, 1.2)', duration: 9, ease: 'sine.inOut', repeat: -1, yoyo: true, stagger: 1.5 });
-    if (!deck) return;
-
-    const cards = gsap.utils.toArray('[data-deck-card]', deck);
-
-    // Entrance: cards fly in from depth.
-    gsap.set(deck, { rotateX: 10, rotateY: -22 });
-    gsap.from(cards.map((card) => card.firstElementChild), { autoAlpha: 0, z: -900, rotateY: 50, rotateX: -20, duration: 1.5, ease: 'expo.out', stagger: { each: 0.09, from: 'end' }, delay: 0.25 });
-
-    // Idle float, each card on its own rhythm.
-    cards.forEach((card, i) => {
-        gsap.to(card.firstElementChild.firstElementChild, { y: i % 2 ? 16 : -16, rotateZ: i % 2 ? 1.5 : -1.5, duration: 3.2 + i * 0.45, ease: 'sine.inOut', repeat: -1, yoyo: true });
-    });
-
-    // Scroll: the deck turns and fans out while the copy drifts away.
-    gsap.timeline({ scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: 0.8 } })
-        .to(deck, { rotateY: 14, rotateX: 16, '--spread': 1.75, ease: 'none' }, 0)
-        .to(hero.querySelector('[data-hero-copy]'), { yPercent: -18, autoAlpha: 0.15, ease: 'none' }, 0)
-        .to(hero.querySelector('[data-deck-stage]'), { yPercent: 10, ease: 'none' }, 0);
-
-    // Pointer: the whole stage leans toward the cursor.
-    if (finePointer) {
-        const stage = hero.querySelector('[data-deck-stage]');
-        const rx = gsap.quickTo(stage, 'rotateX', { duration: 0.9, ease: 'power3.out' });
-        const ry = gsap.quickTo(stage, 'rotateY', { duration: 0.9, ease: 'power3.out' });
-        const move = (e) => {
-            const r = hero.getBoundingClientRect();
-            ry(((e.clientX - r.left) / r.width - 0.5) * 16);
-            rx(((e.clientY - r.top) / r.height - 0.5) * -12);
-        };
-        const leave = () => { rx(0); ry(0); };
-        hero.addEventListener('pointermove', move);
-        hero.addEventListener('pointerleave', leave);
-        return () => {
-            hero.removeEventListener('pointermove', move);
-            hero.removeEventListener('pointerleave', leave);
-        };
-    }
-}
-
-/* ---------- Phone hero: the card fan deals itself in, then opens as you scroll ---------- */
-
-function phoneFan() {
-    const fan = document.querySelector('[data-fan]');
-    if (!fan || !fan.offsetParent) return;
-    const cards = [...fan.children].map((card) => card.firstElementChild);
-
-    gsap.from(fan.closest('section').querySelectorAll('[data-hero-fade]'), { autoAlpha: 0, y: 20, duration: 0.8, ease: 'power3.out', stagger: 0.08, delay: 0.3 });
-    gsap.from(cards, { autoAlpha: 0, y: 200, rotate: (i) => (i - 1) * -18, duration: 1.1, ease: 'back.out(1.5)', stagger: 0.1, delay: 0.45 });
-    cards.forEach((card, i) => {
-        gsap.to(card.firstElementChild, { y: i % 2 ? 7 : -7, duration: 2.6 + i * 0.5, ease: 'sine.inOut', repeat: -1, yoyo: true });
-    });
-    gsap.to(fan, { '--fan': 1.55, ease: 'none', scrollTrigger: { trigger: fan, start: 'top 45%', end: 'bottom top', scrub: 0.5 } });
-}
-
-/* ---------- Departments: vertical scroll drives a horizontal 3D gallery ---------- */
-
-function horizontalGallery() {
-    gsap.utils.toArray('[data-hscroll]').forEach((section) => {
-        const track = section.querySelector('[data-hscroll-track]');
-        const panels = gsap.utils.toArray(track.children);
-        const distance = () => Math.max(track.scrollWidth - section.clientWidth, 0);
-        section.classList.add('is-pinned');
-
-        const tween = gsap.to(track, {
-            x: () => -distance(),
-            ease: 'none',
-            scrollTrigger: {
-                trigger: section,
-                start: 'center center',
-                end: () => '+=' + distance(),
-                pin: true,
-                scrub: 0.9,
-                invalidateOnRefresh: true,
-                anticipatePin: 1,
-            },
-        });
-
-        // Each panel swings to face the viewer as it passes the centre.
-        panels.forEach((panel) => {
-            gsap.timeline({ scrollTrigger: { trigger: panel, containerAnimation: tween, start: 'left right', end: 'right left', scrub: true } })
-                .fromTo(panel, { rotateY: 26, z: -150, opacity: 0.5, transformPerspective: 1200 }, { rotateY: 0, z: 0, opacity: 1, ease: 'none' })
-                .to(panel, { rotateY: -26, z: -150, opacity: 0.5, ease: 'none' });
-        });
-
-        const bar = section.querySelector('[data-hscroll-progress]');
-        if (bar) gsap.to(bar, { scaleX: 1, ease: 'none', scrollTrigger: { trigger: section, start: 'center center', end: () => '+=' + distance(), scrub: 0.9 } });
-    });
-
-    return () => document.querySelectorAll('[data-hscroll]').forEach((section) => section.classList.remove('is-pinned'));
-}
-
-/* ---------- Statement text that lights up as it is read ---------- */
-
-function scrubText() {
-    gsap.utils.toArray('[data-scrub-text]').forEach((el) => {
-        const words = splitWords(el);
-        el.classList.add('is-scrub');
-        gsap.fromTo(words, { opacity: 0.14 }, {
-            opacity: 1, ease: 'none', stagger: 0.12,
-            scrollTrigger: { trigger: el, start: 'top 82%', end: 'bottom 48%', scrub: 0.6 },
+            onToggle: (self) => (self.isActive ? loop.play() : loop.pause()),
         });
     });
 }
@@ -331,12 +231,11 @@ function parallax() {
 
 /* ---------- Pointer tilt with a moving highlight ---------- */
 
-function tilt() {
-    const max = 9;
+function tilt(root) {
+    const max = 8;
     const enter = (e) => {
         const el = e.currentTarget;
         el._rect = el.getBoundingClientRect();
-        gsap.to(el, { scale: 1.02, duration: 0.4, ease: 'power3.out' });
     };
     const move = (e) => {
         const el = e.currentTarget;
@@ -347,9 +246,9 @@ function tilt() {
         el.style.setProperty('--gx', `${px * 100}%`);
         el.style.setProperty('--gy', `${py * 100}%`);
     };
-    const leave = (e) => gsap.to(e.currentTarget, { rotateX: 0, rotateY: 0, scale: 1, duration: 0.8, ease: 'elastic.out(1, 0.6)' });
+    const leave = (e) => gsap.to(e.currentTarget, { rotateX: 0, rotateY: 0, duration: 0.7, ease: 'elastic.out(1, 0.6)' });
 
-    const nodes = gsap.utils.toArray('[data-tilt]');
+    const nodes = gsap.utils.toArray('[data-tilt]', root);
     nodes.forEach((el) => {
         el.addEventListener('pointerenter', enter);
         el.addEventListener('pointermove', move);
