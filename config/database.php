@@ -59,8 +59,11 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // Hosted databases (Aiven and similar) only accept encrypted connections. Save the provider's
+            // CA certificate as database/ca.pem and it is used automatically for any non-local host.
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
+                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA')
+                    ?: (! in_array(env('DB_HOST', '127.0.0.1'), ['127.0.0.1', 'localhost'], true) && is_file(database_path('ca.pem')) ? database_path('ca.pem') : null),
             ]) : [],
         ],
 
