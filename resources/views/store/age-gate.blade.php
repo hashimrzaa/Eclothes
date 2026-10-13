@@ -15,7 +15,7 @@
                 <button name="answer" value="no" class="btn btn-outline">Exit</button>
                 <button name="answer" value="yes" class="btn btn-primary">Yes, enter</button>
             </form>
-            <p class="mt-6 flex items-center justify-center gap-2 text-[13px] text-muted"><x-lucide-package class="size-4" aria-hidden="true" />Orders from this section ship in plain, discreet packaging.</p>
+            <p class="mt-6 flex items-center justify-center gap-2 text-[0.8125rem] text-muted"><x-lucide-package class="size-4" aria-hidden="true" />Orders from this section ship in plain, discreet packaging.</p>
         </div>
     </div>
 @endsection

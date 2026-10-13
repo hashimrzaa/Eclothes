@@ -5,7 +5,7 @@
 @section('content')
     <ul class="grid gap-4 sm:grid-cols-3">
         <li class="card p-5"><p class="text-sm text-muted">Average margin (listed products)</p><p class="mt-1 font-display text-2xl font-extrabold tabular-nums">{{ round((float) $stats->avg_pct, 1) }}%</p></li>
-        <li class="card p-5"><p class="text-sm text-muted">Supplier stock at cost</p><p class="mt-1 font-display text-2xl font-extrabold tabular-nums">{{ money($stats->cost_value) }}</p><p class="text-[13px] text-muted">Held by suppliers, not purchased</p></li>
+        <li class="card p-5"><p class="text-sm text-muted">Supplier stock at cost</p><p class="mt-1 font-display text-2xl font-extrabold tabular-nums">{{ money($stats->cost_value) }}</p><p class="text-[0.8125rem] text-muted">Held by suppliers, not purchased</p></li>
         <li class="card p-5"><p class="text-sm text-muted">Same stock at retail</p><p class="mt-1 font-display text-2xl font-extrabold tabular-nums">{{ money($stats->retail_value) }}</p></li>
     </ul>
 

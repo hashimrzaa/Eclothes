@@ -59,12 +59,12 @@ class SupplyController extends Controller
 
     public function stock(Request $request)
     {
-        $stale = now()->subHours(config('store.stock_stale_hours'));
+        $stale = Product::staleCutoff();
         $q = trim((string) $request->query('q'));
         $products = Product::with('supplier')
             ->when($q !== '', fn ($w) => $w->where(fn ($x) => $x->where('title', 'like', "%$q%")->orWhere('sku', 'like', "%$q%")->orWhere('supplier_sku', 'like', "%$q%")))
             ->when($request->query('supplier'), fn ($w, $id) => $w->where('supplier_id', $id))
-            ->when($request->query('state') === 'stale', fn ($w) => $w->whereIn('status', Product::SELLABLE)->where(fn ($x) => $x->whereNull('stock_verified_at')->orWhere('stock_verified_at', '<', $stale)))
+            ->when($request->query('state') === 'stale', fn ($w) => $stale ? $w->whereIn('status', Product::SELLABLE)->where(fn ($x) => $x->whereNull('stock_verified_at')->orWhere('stock_verified_at', '<', $stale)) : $w->whereRaw('1 = 0'))
             ->when($request->query('state') === 'low', fn ($w) => $w->purchasable()->where('stock_qty', '<=', config('store.low_stock_at')))
             ->when($request->query('state') === 'out', fn ($w) => $w->where('stock_qty', 0))
             ->orderByRaw('stock_verified_at IS NULL DESC')->orderBy('stock_verified_at')->paginate(30)->withQueryString();

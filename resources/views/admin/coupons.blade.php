@@ -15,7 +15,7 @@
                     @forelse ($coupons as $coupon)
                         @php $expired = $coupon->expires_at?->isPast(); $spent = $coupon->usage_limit !== null && $coupon->used_count >= $coupon->usage_limit; @endphp
                         <tr>
-                            <td><code class="rounded bg-sunken px-2 py-1 text-[13px] font-semibold tracking-wide">{{ $coupon->code }}</code></td>
+                            <td><code class="rounded bg-sunken px-2 py-1 text-[0.8125rem] font-semibold tracking-wide">{{ $coupon->code }}</code></td>
                             <td class="font-medium">{{ $coupon->summary }}</td>
                             <td class="num">{{ $coupon->min_spend ? money($coupon->min_spend) : '—' }}</td>
                             <td class="num">{{ $coupon->used_count }}{{ $coupon->usage_limit !== null ? ' / '.$coupon->usage_limit : '' }}</td>

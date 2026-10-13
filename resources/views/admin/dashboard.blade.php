@@ -9,15 +9,15 @@
             <li class="card p-5">
                 <div class="flex items-center justify-between">
                     <p class="text-sm font-medium text-muted">{{ $label }}</p>
-                    <span class="grid size-9 place-items-center rounded-full bg-primary-soft text-primary">@svg('lucide-'.$icon, 'size-[18px]', ['aria-hidden' => 'true'])</span>
+                    <span class="grid size-9 place-items-center rounded-full bg-primary-soft text-primary">@svg('lucide-'.$icon, 'size-[1.125rem]', ['aria-hidden' => 'true'])</span>
                 </div>
                 <p class="mt-2 font-display text-2xl font-extrabold tabular-nums">{{ $value }}</p>
-                <p class="mt-1 text-[13px] text-muted">{{ $note }}</p>
+                <p class="mt-1 text-[0.8125rem] text-muted">{{ $note }}</p>
             </li>
         @endforeach
     </ul>
 
-    <div class="mt-6 grid gap-6 xl:grid-cols-[1fr_380px]">
+    <div class="mt-6 grid gap-6 xl:grid-cols-[1fr_23.75rem]">
         <section class="card p-5 sm:p-6" aria-labelledby="chart-title">
             <div class="flex items-baseline justify-between">
                 <h2 id="chart-title" class="text-base font-bold">Sales — last 14 days</h2>
@@ -33,7 +33,7 @@
                     </div>
                 @endforeach
             </div>
-            <div class="mt-2 flex gap-1.5 border-t border-line pt-2 text-center text-[11px] text-muted sm:gap-2.5">
+            <div class="mt-2 flex gap-1.5 border-t border-line pt-2 text-center text-[0.6875rem] text-muted sm:gap-2.5">
                 @foreach ($days as $day)<span class="flex-1 tabular-nums">{{ $day['short'] }}</span>@endforeach
             </div>
             <table class="sr-only">
@@ -51,7 +51,7 @@
                     @continue(! auth()->user()->canAccess($section))
                     <li>
                         <a href="{{ $url }}" class="flex min-h-14 items-center gap-3 px-5 text-sm hover:bg-canvas">
-                            @svg('lucide-'.$icon, 'size-[18px] shrink-0 '.($count ? 'text-warning' : 'text-muted'), ['aria-hidden' => 'true'])
+                            @svg('lucide-'.$icon, 'size-[1.125rem] shrink-0 '.($count ? 'text-warning' : 'text-muted'), ['aria-hidden' => 'true'])
                             <span class="flex-1 {{ $count ? 'font-medium' : 'text-muted' }}">{{ $label }}</span>
                             <span class="badge {{ $count ? 'badge-warning' : 'badge-neutral' }} tabular-nums">{{ $count }}</span>
                             <x-lucide-chevron-right class="size-4 text-muted" aria-hidden="true" />
@@ -62,7 +62,7 @@
         </section>
     </div>
 
-    <div class="mt-6 grid gap-6 xl:grid-cols-[1fr_380px]">
+    <div class="mt-6 grid gap-6 xl:grid-cols-[1fr_23.75rem]">
         <section class="card overflow-hidden" aria-labelledby="recent-title">
             <div class="flex items-center justify-between border-b border-line px-5 py-4">
                 <h2 id="recent-title" class="text-base font-bold">Recent orders</h2>

@@ -6,7 +6,7 @@
                 @if ($eyebrow)<p class="eyebrow mb-3" data-reveal>{{ $eyebrow }}</p>@endif
                 <h2 class="display text-3xl sm:text-4xl lg:text-5xl" data-split>{{ $title }}</h2>
                 @if ($subtitle)
-                    <p class="mt-3 text-[15px] text-muted" data-reveal data-delay="0.15">{{ $subtitle }}</p>
+                    <p class="mt-3 text-[0.9375rem] text-muted" data-reveal data-delay="0.15">{{ $subtitle }}</p>
                 @endif
             </div>
             @if ($href)

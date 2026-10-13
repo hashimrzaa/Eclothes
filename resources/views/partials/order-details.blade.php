@@ -13,7 +13,7 @@
         'delivered' => 'Delivered. Thank you for shopping with us.',
     ];
 @endphp
-<div class="grid gap-6 lg:grid-cols-[1fr_380px]">
+<div class="grid gap-6 lg:grid-cols-[1fr_23.75rem]">
     <div class="space-y-6">
         {{-- Order tracking --}}
         <section class="card p-5 sm:p-6" aria-labelledby="status-title">
@@ -34,21 +34,21 @@
                         @php $done = $i <= $reached; $current = $i === $reached; @endphp
                         <li class="relative flex gap-4 pb-6 last:pb-0">
                             @unless ($loop->last)
-                                <span class="absolute top-7 left-[13px] h-full w-0.5 {{ $i < $reached ? 'bg-primary' : 'bg-line' }}" aria-hidden="true"></span>
+                                <span class="absolute top-7 left-[0.8125rem] h-full w-0.5 {{ $i < $reached ? 'bg-primary' : 'bg-line' }}" aria-hidden="true"></span>
                             @endunless
                             <span class="relative z-10 grid size-7 shrink-0 place-items-center rounded-full {{ $done ? 'bg-primary text-white' : 'border-2 border-line-strong bg-surface' }} {{ $current ? 'ring-4 ring-primary-soft' : '' }}">
                                 @if ($done)<x-lucide-check class="size-4" aria-hidden="true" />@endif
                             </span>
                             <div class="-mt-0.5" @if ($current) aria-current="step" @endif>
-                                <p class="text-[15px] font-semibold {{ $done ? '' : 'text-muted' }}">{{ $labels[$step] }}</p>
+                                <p class="text-[0.9375rem] font-semibold {{ $done ? '' : 'text-muted' }}">{{ $labels[$step] }}</p>
                                 @if ($current)<p class="text-sm text-ink-2">{{ $hints[$step] }}</p>@endif
-                                @if ($done && isset($times[$step]))<p class="text-[13px] text-muted">{{ $times[$step]->created_at->format('j M Y, g:i a') }}</p>@endif
+                                @if ($done && isset($times[$step]))<p class="text-[0.8125rem] text-muted">{{ $times[$step]->created_at->format('j M Y, g:i a') }}</p>@endif
                             </div>
                         </li>
                     @endforeach
                 </ol>
                 @if ($order->tracking_no)
-                    <p class="mt-5 flex flex-wrap items-center gap-2 rounded-control bg-sunken px-4 py-3 text-sm"><x-lucide-truck class="size-[18px] text-primary" aria-hidden="true" />{{ $order->courier ?: 'Courier' }} tracking number <strong class="tabular-nums">{{ $order->tracking_no }}</strong></p>
+                    <p class="mt-5 flex flex-wrap items-center gap-2 rounded-control bg-sunken px-4 py-3 text-sm"><x-lucide-truck class="size-[1.125rem] text-primary" aria-hidden="true" />{{ $order->courier ?: 'Courier' }} tracking number <strong class="tabular-nums">{{ $order->tracking_no }}</strong></p>
                 @endif
             @endif
         </section>
@@ -67,7 +67,7 @@
                             @else
                                 <p class="line-clamp-2 font-medium">{{ $item->title }}</p>
                             @endif
-                            <p class="mt-0.5 text-[13px] text-muted">{{ collect([$item->colour, $item->size ? 'Size '.$item->size : null, 'Qty '.$item->qty])->filter()->implode(' · ') }}</p>
+                            <p class="mt-0.5 text-[0.8125rem] text-muted">{{ collect([$item->colour, $item->size ? 'Size '.$item->size : null, 'Qty '.$item->qty])->filter()->implode(' · ') }}</p>
                         </div>
                         <p class="shrink-0 text-sm font-semibold tabular-nums">{{ money($item->line_total) }}</p>
                     </li>
@@ -80,7 +80,7 @@
         <section class="card p-5 sm:p-6">
             <h2 class="text-lg font-bold">Payment summary</h2>
             @include('partials.totals', ['totals' => ['subtotal' => $order->subtotal, 'discount' => $order->discount, 'shipping' => $order->shipping, 'total' => $order->total]])
-            <p class="mt-4 flex items-center gap-2 rounded-control bg-sunken px-3.5 py-2.5 text-sm"><x-lucide-banknote class="size-[18px] text-primary" aria-hidden="true" />Cash on Delivery</p>
+            <p class="mt-4 flex items-center gap-2 rounded-control bg-sunken px-3.5 py-2.5 text-sm"><x-lucide-banknote class="size-[1.125rem] text-primary" aria-hidden="true" />Cash on Delivery</p>
         </section>
         <section class="card p-5 text-sm sm:p-6">
             <h2 class="text-lg font-bold">Delivery to</h2>

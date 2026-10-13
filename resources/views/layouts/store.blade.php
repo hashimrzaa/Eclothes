@@ -21,7 +21,7 @@
     {{-- Announcement bar: COD / nationwide delivery / current promotion --}}
     @if ($announcements->isNotEmpty())
         <div class="bg-ink text-white">
-            <div class="container-page flex h-9 items-center justify-center gap-6 overflow-hidden text-[13px]">
+            <div class="container-page flex h-9 items-center justify-center gap-6 overflow-hidden text-[0.8125rem]">
                 @foreach ($announcements as $i => $text)
                     <p class="{{ $i > 0 ? 'hidden md:flex' : 'flex' }} items-center gap-1.5 whitespace-nowrap">
                         <x-lucide-check class="size-3.5 text-emerald-400" aria-hidden="true" />{{ $text }}
@@ -45,7 +45,7 @@
             <form action="{{ route('search') }}" role="search" class="relative ml-auto hidden max-w-xl flex-1 md:block lg:ml-4"
                 x-data="searchBox('{{ route('search.suggest') }}')" x-init="q = @js(request()->routeIs('search') ? (string) request('q') : '')" @click.outside="open = false" @keydown.escape="open = false">
                 <label for="site-search" class="sr-only">Search products</label>
-                <x-lucide-search class="pointer-events-none absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-muted" aria-hidden="true" />
+                <x-lucide-search class="pointer-events-none absolute top-1/2 left-3.5 size-[1.125rem] -translate-y-1/2 text-muted" aria-hidden="true" />
                 <input id="site-search" type="search" name="q" x-model="q" @input="onInput" @focus="q.trim().length > 1 && (open = true)"
                     @keydown.arrow-down.prevent="move(1)" @keydown.arrow-up.prevent="move(-1)" @keydown.enter="go($event)"
                     placeholder="Search for kurtis, bags, kitchen organisers…" autocomplete="off"
@@ -56,16 +56,16 @@
 
             <nav class="ml-auto flex items-center md:ml-0" aria-label="Account and cart">
                 <a href="{{ auth()->check() ? (auth()->user()->isStaff() ? route('admin.dashboard') : route('account')) : route('login') }}" class="icon-btn hidden sm:inline-flex" aria-label="{{ auth()->check() ? 'My account' : 'Sign in' }}">
-                    <x-lucide-user class="size-[22px]" aria-hidden="true" />
+                    <x-lucide-user class="size-[1.375rem]" aria-hidden="true" />
                 </a>
                 <a href="{{ route('wishlist') }}" class="icon-btn relative" aria-label="Wishlist" x-data="{ count: {{ $wishlistCount }} }" @wishlist-count.window="count = $event.detail">
-                    <x-lucide-heart class="size-[22px]" aria-hidden="true" />
-                    <span x-show="count > 0" x-text="count" x-cloak class="absolute top-0.5 right-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-ink px-1 text-[11px] font-bold text-white"></span>
+                    <x-lucide-heart class="size-[1.375rem]" aria-hidden="true" />
+                    <span x-show="count > 0" x-text="count" x-cloak class="absolute top-0.5 right-0.5 grid h-[1.125rem] min-w-[1.125rem] place-items-center rounded-full bg-ink px-1 text-[0.6875rem] font-bold text-white"></span>
                 </a>
                 <a href="{{ route('cart') }}" class="icon-btn relative" aria-label="Cart, {{ $cartCount }} {{ Str::plural('item', $cartCount) }}">
-                    <x-lucide-shopping-bag class="size-[22px]" aria-hidden="true" />
+                    <x-lucide-shopping-bag class="size-[1.375rem]" aria-hidden="true" />
                     @if ($cartCount > 0)
-                        <span class="absolute top-0.5 right-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary px-1 text-[11px] font-bold text-white">{{ $cartCount }}</span>
+                        <span class="absolute top-0.5 right-0.5 grid h-[1.125rem] min-w-[1.125rem] place-items-center rounded-full bg-primary px-1 text-[0.6875rem] font-bold text-white">{{ $cartCount }}</span>
                     @endif
                 </a>
             </nav>
@@ -74,7 +74,7 @@
         {{-- Phones: search is always one tap away --}}
         <form action="{{ route('search') }}" role="search" class="container-page relative pb-3 md:hidden">
             <label for="m-search" class="sr-only">Search products</label>
-            <x-lucide-search class="pointer-events-none absolute top-[calc(50%-0.375rem)] left-8 size-[18px] -translate-y-1/2 text-muted" aria-hidden="true" />
+            <x-lucide-search class="pointer-events-none absolute top-[calc(50%-0.375rem)] left-8 size-[1.125rem] -translate-y-1/2 text-muted" aria-hidden="true" />
             <input id="m-search" type="search" name="q" value="{{ request()->routeIs('search') ? request('q') : '' }}" placeholder="Search kurtis, bags, organisers…" autocomplete="off" enterkeyhint="search"
                 class="field h-11 rounded-full border-transparent bg-sunken pr-4 pl-11 focus:bg-surface">
         </form>
@@ -143,7 +143,7 @@
             <div class="flex-1 overflow-y-auto" x-data="{ dept: null }">
                 @foreach ($nav as $dept)
                     <div class="border-b border-line">
-                        <button type="button" class="flex min-h-[52px] w-full items-center justify-between px-4 text-left text-[15px] font-semibold {{ $dept->kind === 'collection' ? 'text-accent' : '' }}"
+                        <button type="button" class="flex min-h-[3.25rem] w-full items-center justify-between px-4 text-left text-[0.9375rem] font-semibold {{ $dept->kind === 'collection' ? 'text-accent' : '' }}"
                             @click="dept = dept === '{{ $dept->slug }}' ? null : '{{ $dept->slug }}'" :aria-expanded="(dept === '{{ $dept->slug }}').toString()">
                             {{ $dept->name }}
                             <x-lucide-chevron-down class="size-5 text-muted transition-transform" ::class="dept === '{{ $dept->slug }}' && 'rotate-180'" aria-hidden="true" />
@@ -162,7 +162,7 @@
                         </div>
                     </div>
                 @endforeach
-                <ul class="px-4 py-3 text-[15px]">
+                <ul class="px-4 py-3 text-[0.9375rem]">
                     <li><a href="{{ route('shop') }}" class="flex min-h-11 items-center gap-3"><x-lucide-layout-grid class="size-5 text-muted" aria-hidden="true" />Shop All</a></li>
                     <li><a href="{{ route('track') }}" class="flex min-h-11 items-center gap-3"><x-lucide-package-search class="size-5 text-muted" aria-hidden="true" />Track Order</a></li>
                     <li><a href="{{ auth()->check() ? route('account') : route('login') }}" class="flex min-h-11 items-center gap-3"><x-lucide-user class="size-5 text-muted" aria-hidden="true" />{{ auth()->check() ? 'My Account' : 'Sign in / Register' }}</a></li>
@@ -181,12 +181,12 @@
     @hasSection('hide-tabbar')
     @else
         @include('partials.tabbar')
-        <div class="h-[60px] lg:hidden" aria-hidden="true"></div>
+        <div class="h-[3.75rem] lg:hidden" aria-hidden="true"></div>
     @endif
 
     {{-- WhatsApp contact button --}}
     <a href="{{ wa_link('Assalam o Alaikum! I need help with '.config('store.name').'.') }}" target="_blank" rel="noopener"
-        class="fixed right-4 bottom-4 z-30 grid size-12 place-items-center rounded-full bg-[#1faa53] text-white shadow-e3 transition-transform hover:scale-105 lg:size-14 @yield('wa-offset', 'max-lg:bottom-[76px]')"
+        class="fixed right-4 bottom-4 z-30 grid size-12 place-items-center rounded-full bg-[#1faa53] text-white shadow-e3 transition-transform hover:scale-105 lg:size-14 @yield('wa-offset', 'max-lg:bottom-[4.75rem]')"
         aria-label="Chat with us on WhatsApp">
         <x-brand-icon name="whatsapp" class="size-7" />
     </a>

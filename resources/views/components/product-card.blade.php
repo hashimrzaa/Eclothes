@@ -20,7 +20,7 @@
         </div>
 
         @if ($availability !== 'sold_out')
-            <span class="pointer-events-none absolute inset-x-3 bottom-3 z-[6] hidden translate-y-3 items-center justify-center gap-1.5 rounded-full bg-night/90 py-2.5 text-[13px] font-semibold text-white opacity-0 backdrop-blur transition duration-300 group-hover:translate-y-0 group-hover:opacity-100 lg:flex" aria-hidden="true">
+            <span class="pointer-events-none absolute inset-x-3 bottom-3 z-[6] hidden translate-y-3 items-center justify-center gap-1.5 rounded-full bg-night/90 py-2.5 text-[0.8125rem] font-semibold text-white opacity-0 backdrop-blur transition duration-300 group-hover:translate-y-0 group-hover:opacity-100 lg:flex" aria-hidden="true">
                 View product <x-lucide-arrow-up-right class="size-4" />
             </span>
         @endif
@@ -28,7 +28,7 @@
         <button type="button" x-data="wishlistButton('{{ route('wishlist.toggle', $product) }}', {{ $saved ? 'true' : 'false' }})" @click="toggle"
             :aria-pressed="active.toString()" :aria-label="active ? 'Remove from wishlist' : 'Save to wishlist'"
             class="absolute top-1.5 right-1.5 z-10 grid size-10 place-items-center rounded-full bg-surface/90 text-ink-2 shadow-e1 backdrop-blur transition-colors hover:text-accent">
-            <x-lucide-heart class="size-[18px]" ::class="active && 'fill-accent text-accent'" aria-hidden="true" />
+            <x-lucide-heart class="size-[1.125rem]" ::class="active && 'fill-accent text-accent'" aria-hidden="true" />
         </button>
     </div>
 
@@ -36,7 +36,7 @@
         @if ($product->brand)
             <p class="text-xs font-medium tracking-wide text-muted uppercase">{{ $product->brand }}</p>
         @endif
-        <h3 class="mt-0.5 font-sans text-[15px] leading-snug font-medium tracking-normal text-ink">
+        <h3 class="mt-0.5 font-sans text-[0.9375rem] leading-snug font-medium tracking-normal text-ink">
             <a href="{{ $product->url }}" class="line-clamp-2 after:absolute after:inset-0 after:z-0 hover:text-primary">{{ $product->title }}</a>
         </h3>
         <x-rating :value="$product->rating_avg" :count="$product->rating_count" class="mt-1" />

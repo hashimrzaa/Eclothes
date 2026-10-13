@@ -1,6 +1,6 @@
 @props(['items' => []])
 {{-- $items: [label => url|null] --}}
-<nav aria-label="Breadcrumb" {{ $attributes->class('text-[13px] text-muted') }}>
+<nav aria-label="Breadcrumb" {{ $attributes->class('text-[0.8125rem] text-muted') }}>
     <ol class="no-scrollbar flex items-center gap-1.5 overflow-x-auto whitespace-nowrap">
         <li><a href="{{ route('home') }}" class="hover:text-ink">Home</a></li>
         @foreach ($items as $label => $url)

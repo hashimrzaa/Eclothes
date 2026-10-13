@@ -1,2 +1,5 @@
 *
 !.gitignore
+# Stand-in product photos are committed so hosts without a persistent disk (Vercel) can serve them.
+!products/
+!products/*.jpg

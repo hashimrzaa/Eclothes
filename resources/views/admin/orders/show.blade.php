@@ -21,7 +21,7 @@
         <p class="text-sm text-muted">Placed {{ $order->created_at->format('j M Y, g:i a') }} · Cash on Delivery @if ($order->confirmed_via)· Confirmed by {{ $order->confirmed_via === 'whatsapp' ? 'WhatsApp' : 'phone' }}@endif</p>
     </div>
 
-    <div class="mt-5 grid gap-6 xl:grid-cols-[1fr_380px]">
+    <div class="mt-5 grid gap-6 xl:grid-cols-[1fr_23.75rem]">
         <div class="space-y-6">
             {{-- Next step --}}
             @if ($next)

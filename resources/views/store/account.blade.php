@@ -18,7 +18,7 @@
             </div>
         </header>
 
-        <div class="mt-8 grid gap-8 lg:grid-cols-[1fr_380px]">
+        <div class="mt-8 grid gap-8 lg:grid-cols-[1fr_23.75rem]">
             <section aria-labelledby="orders-title">
                 <h2 id="orders-title" class="text-lg font-bold">My orders</h2>
                 @if ($orders->isEmpty())
@@ -35,7 +35,7 @@
                                 <a href="{{ route('order.show', $order->number) }}" class="card flex flex-wrap items-center justify-between gap-3 p-4 transition-shadow hover:shadow-e2 sm:p-5">
                                     <div>
                                         <p class="font-semibold tabular-nums">{{ $order->number }}</p>
-                                        <p class="text-[13px] text-muted">{{ $order->created_at->format('j M Y') }} · {{ $order->items->sum('qty') }} {{ Str::plural('item', $order->items->sum('qty')) }}</p>
+                                        <p class="text-[0.8125rem] text-muted">{{ $order->created_at->format('j M Y') }} · {{ $order->items->sum('qty') }} {{ Str::plural('item', $order->items->sum('qty')) }}</p>
                                     </div>
                                     <div class="flex items-center gap-4">
                                         <span class="badge badge-{{ $order->status_tone }}">{{ $order->status_label }}</span>

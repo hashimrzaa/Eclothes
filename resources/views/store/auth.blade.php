@@ -31,7 +31,7 @@
                     Already have an account? <a href="{{ route('login') }}" class="link">Sign in</a>
                 @endif
             </p>
-            <p class="mt-3 text-center text-[13px] text-muted">You can also <a href="{{ route('shop') }}" class="link">shop as a guest</a> — no account needed for Cash on Delivery.</p>
+            <p class="mt-3 text-center text-[0.8125rem] text-muted">You can also <a href="{{ route('shop') }}" class="link">shop as a guest</a> — no account needed for Cash on Delivery.</p>
         </div>
     </div>
 @endsection

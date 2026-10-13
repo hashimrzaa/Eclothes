@@ -1,6 +1,6 @@
 {{-- Progress indicator: shows how close the shopper is to finishing --}}
 @php $steps = ['Cart', 'Delivery details', 'Confirmation']; @endphp
-<ol class="mx-auto flex max-w-xl items-center text-[13px] font-medium" aria-label="Checkout progress">
+<ol class="mx-auto flex max-w-xl items-center text-[0.8125rem] font-medium" aria-label="Checkout progress">
     @foreach ($steps as $i => $label)
         @php $n = $i + 1; $done = $n < $current; $active = $n === $current; @endphp
         <li class="flex items-center gap-2 {{ $active ? 'text-ink' : ($done ? 'text-primary' : 'text-muted') }}" @if ($active) aria-current="step" @endif>

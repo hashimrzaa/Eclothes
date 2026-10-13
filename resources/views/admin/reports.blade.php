@@ -64,7 +64,7 @@
         <section class="card overflow-hidden">
             <div class="border-b border-line px-5 py-4">
                 <h2 class="text-base font-bold">Top products</h2>
-                <p class="mt-0.5 text-[13px] text-muted">Test → identify winners → scale. Products selling well that are not yet flagged are your next candidates.</p>
+                <p class="mt-0.5 text-[0.8125rem] text-muted">Test → identify winners → scale. Products selling well that are not yet flagged are your next candidates.</p>
             </div>
             <div class="overflow-x-auto">
                 <table class="tbl">
@@ -107,7 +107,7 @@
                     <thead><tr><th>Code</th><th class="num">Orders</th><th class="num">Discount given</th></tr></thead>
                     <tbody>
                         @forelse ($coupons as $row)
-                            <tr><td><code class="rounded bg-sunken px-2 py-1 text-[13px] font-semibold">{{ $row->coupon_code }}</code></td><td class="num">{{ $row->uses }}</td><td class="num">{{ money($row->discount) }}</td></tr>
+                            <tr><td><code class="rounded bg-sunken px-2 py-1 text-[0.8125rem] font-semibold">{{ $row->coupon_code }}</code></td><td class="num">{{ $row->uses }}</td><td class="num">{{ money($row->discount) }}</td></tr>
                         @empty
                             <tr><td colspan="3" class="py-8 text-center text-muted">No coupons were used in this period.</td></tr>
                         @endforelse

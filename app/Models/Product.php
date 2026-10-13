@@ -77,7 +77,7 @@ class Product extends Model
     {
         return $query->whereIn('status', self::SELLABLE)
             ->where('stock_qty', '>', 0)
-            ->where('stock_verified_at', '>=', now()->subHours(config('store.stock_stale_hours')));
+            ->when(self::staleCutoff(), fn (Builder $q, $cutoff) => $q->where('stock_verified_at', '>=', $cutoff));
     }
 
     public function scopeInCategory(Builder $query, Category $category): Builder
@@ -89,10 +89,19 @@ class Product extends Model
 
     /* ---------- Availability ---------- */
 
+    /** Stock verified before this moment counts as unconfirmed; null when the time limit is switched off. */
+    public static function staleCutoff(): ?\Illuminate\Support\Carbon
+    {
+        $hours = (int) config('store.stock_stale_hours');
+
+        return $hours > 0 ? now()->subHours($hours) : null;
+    }
+
     public function isStockFresh(): bool
     {
-        return $this->stock_verified_at !== null
-            && $this->stock_verified_at->gte(now()->subHours(config('store.stock_stale_hours')));
+        $cutoff = self::staleCutoff();
+
+        return $cutoff === null || ($this->stock_verified_at !== null && $this->stock_verified_at->gte($cutoff));
     }
 
     public function isPurchasable(): bool

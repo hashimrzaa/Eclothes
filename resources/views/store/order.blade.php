@@ -26,7 +26,7 @@
                 @endif
 
                 <div class="mt-6 flex flex-wrap justify-center gap-3">
-                    <a href="{{ route('track', ['number' => $order->number, 'phone' => $order->phone]) }}" class="btn btn-outline"><x-lucide-package-search class="size-[18px]" aria-hidden="true" />Track this order</a>
+                    <a href="{{ route('track', ['number' => $order->number, 'phone' => $order->phone]) }}" class="btn btn-outline"><x-lucide-package-search class="size-[1.125rem]" aria-hidden="true" />Track this order</a>
                     <a href="{{ route('shop') }}" class="btn btn-ghost">Continue shopping</a>
                 </div>
             </div>

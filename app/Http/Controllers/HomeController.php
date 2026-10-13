@@ -14,9 +14,10 @@ class HomeController extends Controller
     {
         $visible = Category::navTree()->pluck('slug');
         // Only products that can be ordered right now are promoted on the homepage.
-        $pool = fn () => Product::general()->purchasable()->whereIn('department', $visible);
+        $orderable = Product::general()->purchasable()->exists();
+        $pool = fn () => Product::general()->when($orderable, fn ($q) => $q->purchasable())->whereIn('department', $visible);
         $picks = fn (string $dept) => $visible->contains($dept)
-            ? Product::general()->purchasable()->where('department', $dept)->orderByDesc('is_winner')->orderByDesc('sold_count')->limit(10)->get()
+            ? Product::general()->when($orderable, fn ($q) => $q->purchasable())->where('department', $dept)->orderByDesc('is_winner')->orderByDesc('sold_count')->limit(10)->get()
             : collect();
 
         $rails = [
@@ -34,7 +35,7 @@ class HomeController extends Controller
             // Five in-stock winners float in the hero's 3D deck.
             'deck' => $pool()->whereDoesntHave('category', fn ($c) => $c->where('path', 'like', '%innerwear%'))->orderByDesc('is_winner')->orderByDesc('sold_count')->limit(40)->get()->unique('department')->take(5)->values(),
             'deptPhotos' => Category::navTree()->where('kind', 'normal')->mapWithKeys(fn ($dept) => [
-                $dept->slug => Product::general()->purchasable()->where('department', $dept->slug)->orderByDesc('sold_count')->limit(12)->get()
+                $dept->slug => Product::general()->where('department', $dept->slug)->orderByDesc('sold_count')->limit(12)->get()
                     ->map(fn ($p) => $p->image_urls[0] ?? null)->filter()->first(),
             ]),
             'avgRating' => number_format((float) Review::where('status', 'approved')->avg('rating'), 1),

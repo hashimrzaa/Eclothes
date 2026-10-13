@@ -32,7 +32,7 @@
             {{-- Gallery: images + optional short video / reel --}}
             <div x-data="{ slide: 0 }" class="lg:sticky lg:top-36 lg:self-start">
                 <div class="flex flex-col-reverse gap-3 sm:flex-row">
-                    <div class="no-scrollbar flex gap-2.5 overflow-x-auto sm:w-[72px] sm:shrink-0 sm:flex-col sm:overflow-visible" role="tablist" aria-label="Product images">
+                    <div class="no-scrollbar flex gap-2.5 overflow-x-auto sm:w-[4.5rem] sm:shrink-0 sm:flex-col sm:overflow-visible" role="tablist" aria-label="Product images">
                         @for ($i = 0; $i < $slides; $i++)
                             <button type="button" role="tab" @click="slide = {{ $i }}" :aria-selected="(slide === {{ $i }}).toString()" aria-label="Image {{ $i + 1 }}"
                                 class="aspect-square w-16 shrink-0 overflow-hidden rounded-control border-2 transition-colors sm:w-full" :class="slide === {{ $i }} ? 'border-primary' : 'border-transparent hover:border-line-strong'">
@@ -69,7 +69,7 @@
 
             {{-- Buy box --}}
             <div>
-                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted">
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-muted">
                     @if ($product->brand)<span class="font-semibold tracking-wide text-ink-2 uppercase">{{ $product->brand }}</span>@endif
                     <span>SKU {{ $product->sku }}</span>
                     <a href="{{ $product->category->url }}" class="hover:text-primary">{{ $product->category->parent->name }} · {{ $product->category->name }}</a>
@@ -80,10 +80,10 @@
                     @if ($product->rating_count)
                         <a href="#reviews" class="hover:underline"><x-rating :value="$product->rating_avg" :count="$product->rating_count" size="size-4" /></a>
                     @else
-                        <a href="#reviews" class="text-[13px] text-muted hover:underline">Be the first to review</a>
+                        <a href="#reviews" class="text-[0.8125rem] text-muted hover:underline">Be the first to review</a>
                     @endif
                     @if ($product->sold_count >= 20)
-                        <span class="text-[13px] text-muted">{{ number_format($product->sold_count) }}+ sold</span>
+                        <span class="text-[0.8125rem] text-muted">{{ number_format($product->sold_count) }}+ sold</span>
                     @endif
                 </div>
 
@@ -94,20 +94,20 @@
                         <span class="badge badge-accent">Save {{ money($product->compare_at_price - $product->price) }}</span>
                     @endif
                 </div>
-                <p class="mt-1 text-[13px] text-muted">Inclusive of all taxes · Delivery calculated at checkout</p>
+                <p class="mt-1 text-[0.8125rem] text-muted">Inclusive of all taxes · Delivery calculated at checkout</p>
 
                 {{-- Availability status + low-stock indicator --}}
                 <p class="mt-4 flex items-center gap-2 text-sm font-semibold {{ match ($availability) { 'in_stock' => 'text-success', 'low_stock' => 'text-accent', default => 'text-muted' } }}" role="status">
                     @switch($availability)
-                        @case('in_stock') <x-lucide-circle-check class="size-[18px]" aria-hidden="true" />In stock — ready to dispatch @break
-                        @case('low_stock') <x-lucide-flame class="size-[18px]" aria-hidden="true" />{{ $product->availability_label }} — order soon @break
-                        @case('sold_out') <x-lucide-circle-x class="size-[18px]" aria-hidden="true" />Sold out @break
-                        @default <x-lucide-clock class="size-[18px]" aria-hidden="true" />Availability being confirmed with our supplier
+                        @case('in_stock') <x-lucide-circle-check class="size-[1.125rem]" aria-hidden="true" />In stock — ready to dispatch @break
+                        @case('low_stock') <x-lucide-flame class="size-[1.125rem]" aria-hidden="true" />{{ $product->availability_label }} — order soon @break
+                        @case('sold_out') <x-lucide-circle-x class="size-[1.125rem]" aria-hidden="true" />Sold out @break
+                        @default <x-lucide-clock class="size-[1.125rem]" aria-hidden="true" />Availability being confirmed with our supplier
                     @endswitch
                 </p>
 
                 @if ($product->short_description)
-                    <p class="mt-4 text-[15px] text-ink-2">{{ $product->short_description }}</p>
+                    <p class="mt-4 text-[0.9375rem] text-ink-2">{{ $product->short_description }}</p>
                 @endif
 
                 <form id="buy-form" method="post" action="{{ route('cart.add') }}" class="mt-6 space-y-6" data-once
@@ -157,7 +157,7 @@
                                 <label for="qty" class="text-sm font-semibold">Quantity</label>
                                 <div class="mt-3 flex h-12 items-center rounded-control border border-line-strong">
                                     <button type="button" class="grid h-full w-11 place-items-center text-ink-2 hover:bg-sunken disabled:opacity-30" @click="qty = Math.max(1, qty - 1)" :disabled="qty <= 1" aria-label="Decrease quantity"><x-lucide-minus class="size-4" aria-hidden="true" /></button>
-                                    <input id="qty" name="qty" type="number" x-model.number="qty" min="1" :max="max" class="h-full w-10 border-0 bg-transparent text-center text-[15px] font-semibold focus:outline-none" readonly>
+                                    <input id="qty" name="qty" type="number" x-model.number="qty" min="1" :max="max" class="h-full w-10 border-0 bg-transparent text-center text-[0.9375rem] font-semibold focus:outline-none" readonly>
                                     <button type="button" class="grid h-full w-11 place-items-center text-ink-2 hover:bg-sunken disabled:opacity-30" @click="qty = Math.min(max, qty + 1)" :disabled="qty >= max" aria-label="Increase quantity"><x-lucide-plus class="size-4" aria-hidden="true" /></button>
                                 </div>
                             </div>
@@ -168,16 +168,16 @@
                         <div class="rounded-card bg-sunken p-4 text-sm text-ink-2">
                             <p class="font-semibold">{{ $availability === 'sold_out' ? 'This product is sold out.' : 'We are confirming stock with our supplier.' }}</p>
                             <p class="mt-1 text-muted">Message us on WhatsApp and we will tell you when it is available.</p>
-                            <a href="{{ wa_link($waText) }}" target="_blank" rel="noopener" class="btn btn-outline mt-3"><x-brand-icon name="whatsapp" class="size-[18px] text-[#1faa53]" />Ask on WhatsApp</a>
+                            <a href="{{ wa_link($waText) }}" target="_blank" rel="noopener" class="btn btn-outline mt-3"><x-brand-icon name="whatsapp" class="size-[1.125rem] text-[#1faa53]" />Ask on WhatsApp</a>
                         </div>
                     @endif
                 </form>
 
                 <div class="mt-4 flex gap-2">
                     <button type="button" class="btn btn-ghost btn-sm" x-data="wishlistButton('{{ route('wishlist.toggle', $product) }}', {{ $inWishlist ? 'true' : 'false' }})" @click="toggle" :aria-pressed="active.toString()">
-                        <x-lucide-heart class="size-[18px]" ::class="active && 'fill-accent text-accent'" aria-hidden="true" /><span x-text="active ? 'Saved to wishlist' : 'Add to wishlist'"></span>
+                        <x-lucide-heart class="size-[1.125rem]" ::class="active && 'fill-accent text-accent'" aria-hidden="true" /><span x-text="active ? 'Saved to wishlist' : 'Add to wishlist'"></span>
                     </button>
-                    <button type="button" class="btn btn-ghost btn-sm" onclick="shareProduct(@js($product->title), @js($product->url))"><x-lucide-share-2 class="size-[18px]" aria-hidden="true" />Share</button>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="shareProduct(@js($product->title), @js($product->url))"><x-lucide-share-2 class="size-[1.125rem]" aria-hidden="true" />Share</button>
                 </div>
 
                 {{-- Delivery, COD and returns at the point of decision --}}
@@ -205,15 +205,15 @@
                     @endphp
                     @foreach ($panels as $key => $label)
                         <div>
-                            <button type="button" class="flex min-h-[52px] w-full items-center justify-between text-left text-[15px] font-semibold" @click="tab = tab === '{{ $key }}' ? null : '{{ $key }}'" :aria-expanded="(tab === '{{ $key }}').toString()">
+                            <button type="button" class="flex min-h-[3.25rem] w-full items-center justify-between text-left text-[0.9375rem] font-semibold" @click="tab = tab === '{{ $key }}' ? null : '{{ $key }}'" :aria-expanded="(tab === '{{ $key }}').toString()">
                                 {{ $label }}<x-lucide-chevron-down class="size-5 text-muted transition-transform" ::class="tab === '{{ $key }}' && 'rotate-180'" aria-hidden="true" />
                             </button>
                             <div x-show="tab === '{{ $key }}'" x-collapse @if (! $loop->first) x-cloak @endif>
-                                <div class="pb-5 text-[15px] leading-7 text-ink-2">
+                                <div class="pb-5 text-[0.9375rem] leading-7 text-ink-2">
                                     @if ($key === 'description')
                                         {!! nl2br(e($product->description ?: $product->short_description)) !!}
                                     @elseif ($key === 'specs')
-                                        <dl class="grid grid-cols-[minmax(110px,auto)_1fr] gap-x-6 gap-y-2">
+                                        <dl class="grid grid-cols-[minmax(6.875rem,auto)_1fr] gap-x-6 gap-y-2">
                                             @foreach ($product->specs as $name => $value)
                                                 <dt class="text-muted">{{ $name }}</dt><dd>{{ is_array($value) ? implode(', ', $value) : $value }}</dd>
                                             @endforeach
@@ -267,7 +267,7 @@
         {{-- Reviews --}}
         <section id="reviews" class="mt-16 scroll-mt-40" aria-labelledby="reviews-title">
             <h2 id="reviews-title" class="display text-3xl sm:text-4xl" data-split>Customer reviews</h2>
-            <div class="mt-5 grid gap-8 lg:grid-cols-[300px_1fr]">
+            <div class="mt-5 grid gap-8 lg:grid-cols-[18.75rem_1fr]">
                 <div>
                     <div class="card p-6">
                         @if ($product->rating_count)
@@ -277,7 +277,7 @@
                             <dl class="mt-4 space-y-1.5">
                                 @for ($stars = 5; $stars >= 1; $stars--)
                                     @php $n = $breakdown[$stars] ?? 0; @endphp
-                                    <div class="flex items-center gap-2 text-[13px] text-muted">
+                                    <div class="flex items-center gap-2 text-[0.8125rem] text-muted">
                                         <dt class="w-8 shrink-0">{{ $stars }} ★</dt>
                                         <dd class="flex flex-1 items-center gap-2"><span class="h-2 flex-1 overflow-hidden rounded-full bg-sunken"><span class="block h-full rounded-full bg-amber-500" style="width: {{ $n / $product->rating_count * 100 }}%"></span></span><span class="w-5 text-right tabular-nums">{{ $n }}</span></dd>
                                     </div>
@@ -295,10 +295,10 @@
                         <li class="py-5 first:pt-0">
                             <div class="flex flex-wrap items-center justify-between gap-2">
                                 <x-rating :value="$review->rating" size="size-4" />
-                                <time datetime="{{ $review->created_at->toDateString() }}" class="text-[13px] text-muted">{{ $review->created_at->format('j M Y') }}</time>
+                                <time datetime="{{ $review->created_at->toDateString() }}" class="text-[0.8125rem] text-muted">{{ $review->created_at->format('j M Y') }}</time>
                             </div>
-                            <p class="mt-2 text-[15px] text-ink-2">{{ $review->body }}</p>
-                            <p class="mt-2 text-[13px] text-muted"><span class="font-semibold text-ink">{{ $review->name }}</span>@if ($review->city) · {{ $review->city }}@endif</p>
+                            <p class="mt-2 text-[0.9375rem] text-ink-2">{{ $review->body }}</p>
+                            <p class="mt-2 text-[0.8125rem] text-muted"><span class="font-semibold text-ink">{{ $review->name }}</span>@if ($review->city) · {{ $review->city }}@endif</p>
                         </li>
                     @empty
                         <li class="rounded-card bg-sunken p-8 text-center text-sm text-muted">Reviews will appear here once customers share their experience.</li>
@@ -315,7 +315,7 @@
     @if ($canBuy)
         <div class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface px-4 py-3 shadow-e3 lg:hidden">
             <div class="flex items-center gap-3">
-                <div class="min-w-0 flex-1"><p class="truncate text-[13px] text-muted">{{ $product->title }}</p><p class="font-bold {{ $product->on_sale ? 'text-accent' : '' }}">{{ money($product->price) }}</p></div>
+                <div class="min-w-0 flex-1"><p class="truncate text-[0.8125rem] text-muted">{{ $product->title }}</p><p class="font-bold {{ $product->on_sale ? 'text-accent' : '' }}">{{ money($product->price) }}</p></div>
                 <button form="buy-form" class="btn btn-primary">Add to Cart</button>
             </div>
         </div>
@@ -344,7 +344,7 @@
             </div>
             <x-field label="Your review" name="body" rows="4" required hint="Tell others about the quality, fit and delivery. Minimum 10 characters." />
             <button class="btn btn-primary w-full">Submit review</button>
-            <p class="text-center text-[13px] text-muted">Reviews are checked by our team before they are published.</p>
+            <p class="text-center text-[0.8125rem] text-muted">Reviews are checked by our team before they are published.</p>
         </form>
     </x-modal>
 

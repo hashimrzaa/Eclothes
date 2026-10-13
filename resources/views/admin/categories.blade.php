@@ -11,7 +11,7 @@
                 <div class="flex flex-wrap items-center gap-x-4 gap-y-2 p-4 sm:px-5">
                     <button type="button" class="flex min-h-11 flex-1 items-center gap-3 text-left" @click="open = !open" :aria-expanded="open.toString()">
                         <x-lucide-chevron-right class="size-5 shrink-0 text-muted transition-transform" ::class="open && 'rotate-90'" aria-hidden="true" />
-                        <span class="grid size-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">@svg('lucide-'.($dept->icon ?: 'tag'), 'size-[18px]', ['aria-hidden' => 'true'])</span>
+                        <span class="grid size-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">@svg('lucide-'.($dept->icon ?: 'tag'), 'size-[1.125rem]', ['aria-hidden' => 'true'])</span>
                         <span><span class="font-semibold">{{ $dept->name }}</span>
                             <span class="block text-xs text-muted">{{ $dept->children->count() }} groups · {{ $dept->children->sum(fn ($g) => $g->children->count()) }} sub-categories @if ($dept->kind === 'collection')· automatic collections @endif</span></span>
                     </button>
@@ -38,7 +38,7 @@
                             </div>
                             <ul class="mt-3 flex flex-wrap gap-2">
                                 @foreach ($group->children as $leaf)
-                                    <li class="inline-flex items-center gap-2 rounded-full border border-line bg-surface py-1 pr-1 pl-3 text-[13px] {{ $leaf->is_visible ? '' : 'opacity-50' }}">
+                                    <li class="inline-flex items-center gap-2 rounded-full border border-line bg-surface py-1 pr-1 pl-3 text-[0.8125rem] {{ $leaf->is_visible ? '' : 'opacity-50' }}">
                                         {{ $leaf->name }}
                                         @if ($leaf->kind === 'normal')<span class="text-muted tabular-nums">{{ $counts[$leaf->id] ?? 0 }}</span>@endif
                                         <form method="post" action="{{ route('admin.categories.update', $leaf) }}">

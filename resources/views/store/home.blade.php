@@ -18,9 +18,9 @@
         <div data-glow class="glow absolute top-[8%] right-[12%] -z-10 size-80 bg-primary/60" aria-hidden="true"></div>
         <div data-glow class="glow absolute bottom-[5%] left-[30%] -z-10 size-72 bg-lime/15" aria-hidden="true"></div>
 
-        <div class="container-page grid min-h-[min(820px,calc(100svh-6.5rem))] items-center gap-10 py-14 lg:grid-cols-[1.05fr_1fr] lg:py-20">
+        <div class="container-page grid min-h-[min(51.25rem,calc(100svh-6.5rem))] items-center gap-10 py-14 lg:grid-cols-[1.05fr_1fr] lg:py-20">
             <div data-hero-copy class="relative z-10">
-                <p data-hero-fade class="inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.06] py-1.5 pr-4 pl-2 text-[13px] font-medium backdrop-blur">
+                <p data-hero-fade class="inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.06] py-1.5 pr-4 pl-2 text-[0.8125rem] font-medium backdrop-blur">
                     <span class="grid size-6 place-items-center rounded-full bg-lime text-night"><x-lucide-banknote class="size-3.5" aria-hidden="true" /></span>
                     Pay when it reaches your door
                 </p>
@@ -37,28 +37,28 @@
                 </div>
 
                 <dl data-hero-fade class="mt-12 grid max-w-md grid-cols-3 gap-6 border-t border-white/12 pt-6">
-                    <div><dd class="font-display text-3xl font-extrabold tracking-tight sm:text-4xl"><span data-count="{{ $productCount }}">{{ $productCount }}</span>+</dd><dt class="mt-1 text-[13px] text-white/60">Products in store</dt></div>
-                    <div><dd class="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">{{ $minDays }}–{{ $maxDays }}</dd><dt class="mt-1 text-[13px] text-white/60">Day delivery</dt></div>
-                    <div><dd class="font-display text-3xl font-extrabold tracking-tight sm:text-4xl"><span data-count="7">7</span></dd><dt class="mt-1 text-[13px] text-white/60">Day easy exchange</dt></div>
+                    <div><dd class="font-display text-3xl font-extrabold tracking-tight sm:text-4xl"><span data-count="{{ $productCount }}">{{ $productCount }}</span>+</dd><dt class="mt-1 text-[0.8125rem] text-white/60">Products in store</dt></div>
+                    <div><dd class="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">{{ $minDays }}–{{ $maxDays }}</dd><dt class="mt-1 text-[0.8125rem] text-white/60">Day delivery</dt></div>
+                    <div><dd class="font-display text-3xl font-extrabold tracking-tight sm:text-4xl"><span data-count="7">7</span></dd><dt class="mt-1 text-[0.8125rem] text-white/60">Day easy exchange</dt></div>
                 </dl>
             </div>
 
             {{-- 3D deck of real, in-stock products --}}
             @if ($deck->count() >= 3)
-                <div data-deck-stage class="deck-stage relative hidden h-[620px] lg:block" aria-label="Featured products">
+                <div data-deck-stage class="deck-stage relative hidden h-[38.75rem] lg:block" aria-label="Featured products">
                     <ul data-deck class="deck absolute inset-0">
                         @foreach ($deck as $i => $product)
                             @php [$x, $y, $z, $r] = $slots[$i]; @endphp
-                            <li data-deck-card class="deck-card" style="--x: {{ $x }}px; --y: {{ $y }}px; --z: {{ $z }}px; --r: {{ $r }}deg;">
+                            <li data-deck-card class="deck-card" style="--x: {{ $x / 16 }}rem; --y: {{ $y / 16 }}rem; --z: {{ $z / 16 }}rem; --r: {{ $r }}deg;">
                                 <div><div>
                                     <a href="{{ $product->url }}" class="deck-face block p-2.5 text-ink">
-                                        <span class="relative block aspect-[4/5] overflow-hidden rounded-[14px] bg-sunken">
+                                        <span class="relative block aspect-[4/5] overflow-hidden rounded-[0.875rem] bg-sunken">
                                             <x-product-image :product="$product" :eager="true" />
                                             @if ($product->on_sale)<span class="badge absolute top-2 left-2 bg-accent text-white">−{{ $product->discount_pct }}%</span>@endif
                                         </span>
                                         <span class="block px-1.5 pt-3 pb-1.5">
                                             <span class="line-clamp-1 text-sm font-semibold">{{ $product->title }}</span>
-                                            <span class="mt-0.5 flex items-center justify-between text-[13px]">
+                                            <span class="mt-0.5 flex items-center justify-between text-[0.8125rem]">
                                                 <span class="font-bold">{{ money($product->price) }}</span>
                                                 @if ($product->rating_count)<span class="flex items-center gap-1 text-muted"><x-lucide-star class="size-3.5 fill-amber-500 text-amber-500" aria-hidden="true" />{{ number_format($product->rating_avg, 1) }}</span>@endif
                                             </span>
@@ -68,13 +68,9 @@
                             </li>
                         @endforeach
                     </ul>
-                    <div class="absolute top-4 left-2" style="transform: translateZ(120px)"><p data-hero-fade data-parallax="-30" class="flex items-center gap-2.5 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold backdrop-blur-md">
+                    <div class="absolute top-4 left-2" style="transform: translateZ(7.5rem)"><p data-hero-fade data-parallax="-30" class="flex items-center gap-2.5 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold backdrop-blur-md">
                         <span class="grid size-9 place-items-center rounded-full bg-lime text-night"><x-lucide-star class="size-4 fill-current" aria-hidden="true" /></span>
                         <span>{{ $avgRating }} / 5<span class="block text-xs font-normal text-white/60">from {{ number_format($reviewCount) }} reviews</span></span>
-                    </p></div>
-                    <div class="absolute bottom-20 left-0" style="transform: translateZ(120px)"><p data-hero-fade data-parallax="-45" class="flex items-center gap-2.5 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold backdrop-blur-md">
-                        <span class="grid size-9 place-items-center rounded-full bg-white text-night"><x-lucide-truck class="size-4" aria-hidden="true" /></span>
-                        <span>Delivered in {{ $minDays }}–{{ $maxDays }} days<span class="block text-xs font-normal text-white/60">Pay at your door</span></span>
                     </p></div>
                 </div>
             @endif
@@ -103,11 +99,11 @@
                 <p class="mt-2 text-right text-xs text-muted">Keep scrolling</p>
             </div>
         </div>
-        <ul data-hscroll-track class="px-4 sm:px-6 lg:px-[max(2rem,calc((100vw-1280px)/2+2rem))]">
+        <ul data-hscroll-track class="px-4 sm:px-6 lg:px-[max(2rem,calc((100vw-80rem)/2+2rem))]">
             @foreach ($departments as $i => $dept)
                 @php $deals = $dept->kind === 'collection'; @endphp
-                <li class="w-[78vw] max-w-[380px] shrink-0 sm:w-[380px]">
-                    <a href="{{ $dept->url }}" class="group/panel relative flex h-[440px] flex-col overflow-hidden rounded-[28px] p-7 transition-shadow duration-500 hover:shadow-e3 {{ $deals ? 'bg-night text-white' : ($i % 2 ? 'bg-primary-soft' : 'border border-line bg-surface') }}">
+                <li class="w-[78vw] max-w-[23.75rem] shrink-0 sm:w-[23.75rem]">
+                    <a href="{{ $dept->url }}" class="group/panel relative flex h-[27.5rem] flex-col overflow-hidden rounded-[1.75rem] p-7 transition-shadow duration-500 hover:shadow-e3 {{ $deals ? 'bg-night text-white' : ($i % 2 ? 'bg-primary-soft' : 'border border-line bg-surface') }}">
                         <span class="font-display text-sm font-bold tabular-nums opacity-50">{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }} / {{ str_pad($departments->count(), 2, '0', STR_PAD_LEFT) }}</span>
                         <span class="pointer-events-none absolute -right-10 -bottom-10 opacity-[0.07] transition-transform duration-700 ease-out group-hover/panel:scale-110 group-hover/panel:-rotate-6 {{ $deals ? 'text-lime opacity-20' : '' }}" aria-hidden="true">
                             @svg('lucide-'.($dept->icon ?: 'tag'), 'size-72', ['stroke-width' => '0.75'])
@@ -140,7 +136,7 @@
             <section class="container-page mt-14 lg:mt-28">
                 <ul class="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:grid-rows-2 lg:gap-4" data-reveal-group>
                     <li class="col-span-2 lg:row-span-2">
-                        <a href="{{ route('category', 'deals-trending/deals/under-rs-499') }}" data-tilt class="tilt-glare group relative flex h-full min-h-60 flex-col justify-between overflow-hidden rounded-[28px] bg-night p-6 text-white sm:p-8 lg:min-h-72">
+                        <a href="{{ route('category', 'deals-trending/deals/under-rs-499') }}" data-tilt class="tilt-glare group relative flex h-full min-h-60 flex-col justify-between overflow-hidden rounded-[1.75rem] bg-night p-6 text-white sm:p-8 lg:min-h-72">
                             <span class="pointer-events-none absolute -top-16 -right-16 size-72 rounded-full bg-accent/50 blur-3xl" data-parallax="18" aria-hidden="true"></span>
                             <span class="eyebrow relative text-lime">Budget finds</span>
                             <span class="relative">
@@ -157,9 +153,9 @@
                         ['deals-trending/discovery/limited-stock', 'Almost gone', 'Limited stock', 'bg-lime text-night', 'flame'],
                     ] as [$path, $kicker, $label, $tone, $icon])
                         <li>
-                            <a href="{{ route('category', $path) }}" data-tilt class="tilt-glare group relative flex h-full min-h-32 flex-col justify-between overflow-hidden rounded-3xl p-4 sm:p-6 lg:min-h-40 lg:rounded-[28px] {{ $tone }}">
+                            <a href="{{ route('category', $path) }}" data-tilt class="tilt-glare group relative flex h-full min-h-32 flex-col justify-between overflow-hidden rounded-3xl p-4 sm:p-6 lg:min-h-40 lg:rounded-[1.75rem] {{ $tone }}">
                                 <span class="flex items-start justify-between">
-                                    <span class="text-[13px] font-semibold opacity-70">{{ $kicker }}</span>
+                                    <span class="text-[0.8125rem] font-semibold opacity-70">{{ $kicker }}</span>
                                     @svg('lucide-'.$icon, 'size-6 opacity-60', ['stroke-width' => '1.5', 'aria-hidden' => 'true'])
                                 </span>
                                 <span class="flex items-end justify-between gap-3">
@@ -210,7 +206,7 @@
                             <span class="grid size-10 shrink-0 place-items-center rounded-full bg-ink font-display font-bold text-lime">{{ mb_substr($review->name, 0, 1) }}</span>
                             <span class="min-w-0 flex-1">
                                 <span class="block font-semibold">{{ $review->name }}@if ($review->city)<span class="font-normal text-muted"> · {{ $review->city }}</span>@endif</span>
-                                <a href="{{ $review->product->url }}" class="block truncate text-[13px] text-muted hover:text-primary">{{ $review->product->title }}</a>
+                                <a href="{{ $review->product->url }}" class="block truncate text-[0.8125rem] text-muted hover:text-primary">{{ $review->product->title }}</a>
                             </span>
                             <x-rating :value="$review->rating" />
                         </figcaption>
@@ -222,7 +218,7 @@
 
     {{-- ============ Instagram / TikTok ============ --}}
     <section class="container-page mt-24 lg:mt-36">
-        <div class="hero relative isolate overflow-hidden rounded-[32px] px-6 py-16 text-center text-white sm:px-12 sm:py-24" data-reveal>
+        <div class="hero relative isolate overflow-hidden rounded-[2rem] px-6 py-16 text-center text-white sm:px-12 sm:py-24" data-reveal>
             <div class="hero-grid absolute inset-0 -z-10" aria-hidden="true"></div>
             <p class="eyebrow justify-center text-lime">Follow along</p>
             <h2 class="display mx-auto mt-5 max-w-3xl text-4xl sm:text-6xl">See it before you buy it.</h2>

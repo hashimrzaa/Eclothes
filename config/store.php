@@ -20,7 +20,8 @@ return [
 
     // Spec §14 critical rule: a product is only shown as available when the
     // supplier confirmed stock within this window.
-    'stock_stale_hours' => 72,
+    // Set STOCK_STALE_HOURS=0 to switch the time limit off (demo data, or stock that is synced automatically).
+    'stock_stale_hours' => (int) env('STOCK_STALE_HOURS', 72),
     'low_stock_at' => 5,
     'low_margin_pct' => 20,
 

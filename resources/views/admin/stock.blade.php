@@ -6,8 +6,12 @@
 
 @section('content')
     <div class="flex items-start gap-3 rounded-card bg-info-soft p-4 text-sm text-info">
-        <x-lucide-info class="mt-0.5 size-[18px] shrink-0" aria-hidden="true" />
+        <x-lucide-info class="mt-0.5 size-[1.125rem] shrink-0" aria-hidden="true" />
+        @if ($hours < 1)
+            <p><strong>Availability rule is switched off</strong> (<code>STOCK_STALE_HOURS=0</code>): products stay available for as long as their quantity is above zero. Set it to 72 once you confirm stock with real suppliers.</p>
+        @else
         <p><strong>Availability rule:</strong> a product is only shown as available in the store for {{ $hours }} hours after its stock was last confirmed with the supplier. After that it shows “Availability being confirmed” and cannot be ordered until you verify it again.</p>
+        @endif
     </div>
 
     <div class="mt-5"><x-admin.tabs param="state" :options="['stale' => 'Needs verification', 'low' => 'Low stock', 'out' => 'Out of stock']" all="All stock" /></div>
@@ -40,7 +44,7 @@
                             <td><span class="line-clamp-1 font-medium">{{ $product->title }}</span><span class="block text-xs text-muted">{{ $product->sku }} · {{ config('store.product_statuses')[$product->status] }}</span></td>
                             <td class="text-muted">{{ $product->supplier?->name ?? '—' }}<span class="block text-xs">{{ $product->lead_days }}d lead time</span></td>
                             <td class="text-muted tabular-nums">{{ $product->supplier_sku ?: '—' }}</td>
-                            <td class="max-w-[200px] text-xs text-muted"><span class="line-clamp-2">{{ collect([implode(', ', $product->sizes ?? []), implode(', ', $product->colours ?? [])])->filter()->implode(' · ') ?: '—' }}</span></td>
+                            <td class="max-w-[12.5rem] text-xs text-muted"><span class="line-clamp-2">{{ collect([implode(', ', $product->sizes ?? []), implode(', ', $product->colours ?? [])])->filter()->implode(' · ') ?: '—' }}</span></td>
                             <td class="whitespace-nowrap {{ $fresh ? 'text-muted' : 'font-semibold text-warning' }}" title="{{ $product->stock_verified_at?->format('j M Y, g:i a') }}">{{ $product->stock_verified_at?->diffForHumans() ?? 'Never' }}</td>
                             <td>
                                 @if (! $sellable)<span class="badge badge-neutral">Not on sale</span>

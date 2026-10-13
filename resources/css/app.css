@@ -39,8 +39,8 @@
     --color-info: #1d4ed8;
     --color-info-soft: #e8effd;
 
-    --radius-card: 20px;
-    --radius-control: 12px;
+    --radius-card: 1.25rem;
+    --radius-control: 0.75rem;
 
     /* Material-style elevation levels */
     --shadow-e1: 0 1px 2px rgb(17 24 39 / 0.06), 0 1px 3px rgb(17 24 39 / 0.08);
@@ -61,13 +61,23 @@
 }
 
 @layer base {
+    /*
+     | Desktop scales as one piece: every size is in rem and the root size follows the window width,
+     | so a 1280px laptop and a 1920px monitor show the same composition (16px at 1440px wide).
+     | Phones and tablets keep a fixed 16px root and use their own layouts instead.
+     */
+    @media (min-width: 1024px) {
+        html {
+            font-size: clamp(13.5px, 1.1111vw, 26px);
+        }
+    }
     html {
         scroll-behavior: smooth;
         -webkit-text-size-adjust: 100%;
     }
     body {
         @apply bg-canvas font-sans text-ink antialiased;
-        font-size: 16px;
+        font-size: 1rem;
         line-height: 1.5;
     }
     h1, h2, h3, h4 {
@@ -100,7 +110,7 @@
 
 @layer components {
     .container-page {
-        @apply mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8;
+        @apply mx-auto w-full max-w-[80rem] px-4 sm:px-6 lg:px-8;
     }
     .card {
         @apply rounded-card border border-line bg-surface;
@@ -108,7 +118,7 @@
 
     /* Buttons: one filled primary action per view, everything else is quieter. */
     .btn {
-        @apply inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 text-[15px] font-semibold whitespace-nowrap transition-colors duration-150 select-none;
+        @apply inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 text-[0.9375rem] font-semibold whitespace-nowrap transition-colors duration-150 select-none;
     }
     .btn:disabled, .btn[aria-disabled='true'] {
         @apply cursor-not-allowed opacity-50;
@@ -140,7 +150,7 @@
 
     /* Form controls */
     .field {
-        @apply h-11 w-full rounded-control border border-line-strong bg-surface px-3 text-[15px] text-ink transition-colors placeholder:text-muted hover:border-muted focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none;
+        @apply h-11 w-full rounded-control border border-line-strong bg-surface px-3 text-[0.9375rem] text-ink transition-colors placeholder:text-muted hover:border-muted focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none;
     }
     textarea.field {
         @apply h-auto py-2.5;
@@ -155,10 +165,10 @@
         @apply mb-1.5 block text-sm font-medium text-ink;
     }
     .hint {
-        @apply mt-1.5 text-[13px] text-muted;
+        @apply mt-1.5 text-[0.8125rem] text-muted;
     }
     .error {
-        @apply mt-1.5 flex items-start gap-1.5 text-[13px] font-medium text-danger;
+        @apply mt-1.5 flex items-start gap-1.5 text-[0.8125rem] font-medium text-danger;
     }
 
     .link {
@@ -195,7 +205,7 @@
     }
 
     .prose-store {
-        @apply text-[15px] leading-7 text-ink-2;
+        @apply text-[0.9375rem] leading-7 text-ink-2;
     }
     .prose-store h2 {
         @apply mt-8 mb-2 text-lg font-bold text-ink;
@@ -303,7 +313,7 @@ html.lenis {
 }
 .hero-grid {
     background-image: linear-gradient(rgb(255 255 255 / 0.045) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 0.045) 1px, transparent 1px);
-    background-size: 56px 56px;
+    background-size: 3.5rem 3.5rem;
     mask-image: radial-gradient(75% 75% at 60% 40%, #000 20%, transparent 100%);
 }
 .glow {
@@ -313,7 +323,7 @@ html.lenis {
 }
 
 .deck-stage {
-    perspective: 1500px;
+    perspective: 94rem;
     transform-style: preserve-3d;
 }
 .deck {
@@ -337,7 +347,7 @@ html.lenis {
     transform-style: preserve-3d;
 }
 .deck-face {
-    border-radius: 22px;
+    border-radius: 1.375rem;
     background: rgb(255 255 255 / 0.96);
     box-shadow: 0 40px 80px -30px rgb(0 0 0 / 0.75), 0 0 0 1px rgb(255 255 255 / 0.12);
     transition: box-shadow 300ms ease;
@@ -432,4 +442,11 @@ html.lenis {
 .fan-card > *,
 .fan-card > * > * {
     display: block;
+}
+
+/* Tablet: the fan sits beside the headline, so it rests inside the card instead of on its bottom edge */
+@media (min-width: 768px) {
+    .fan-card {
+        bottom: 0.5rem;
+    }
 }

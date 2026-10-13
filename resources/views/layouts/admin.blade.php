@@ -31,14 +31,14 @@
         </div>
         <nav class="flex-1 overflow-y-auto px-3 py-4" aria-label="Admin sections">
             @foreach ($groups as $group => $items)
-                <p class="mt-4 mb-1.5 px-3 text-[11px] font-semibold tracking-wider text-muted uppercase first:mt-0">{{ $group }}</p>
+                <p class="mt-4 mb-1.5 px-3 text-[0.6875rem] font-semibold tracking-wider text-muted uppercase first:mt-0">{{ $group }}</p>
                 <ul class="space-y-0.5">
                     @foreach ($items as $item)
                         @php $active = $current === $item['key']; @endphp
                         <li>
                             <a href="{{ route($item['key'] === 'dashboard' ? 'admin.dashboard' : 'admin.'.$item['key'].'.index') }}" @if ($active) aria-current="page" @endif
                                 class="flex min-h-10 items-center gap-3 rounded-control px-3 text-sm font-medium transition-colors {{ $active ? 'bg-primary-soft text-primary' : 'text-ink-2 hover:bg-sunken hover:text-ink' }}">
-                                @svg('lucide-'.$item['icon'], 'size-[18px] shrink-0', ['aria-hidden' => 'true'])
+                                @svg('lucide-'.$item['icon'], 'size-[1.125rem] shrink-0', ['aria-hidden' => 'true'])
                                 {{ $item['label'] }}
                             </a>
                         </li>
@@ -50,7 +50,7 @@
             <div class="flex items-center gap-3 px-2 py-1.5">
                 <span class="grid size-9 shrink-0 place-items-center rounded-full bg-sunken text-sm font-bold text-ink-2">{{ Str::upper(mb_substr($me->name, 0, 1)) }}</span>
                 <div class="min-w-0 flex-1"><p class="truncate text-sm font-semibold">{{ $me->name }}</p><p class="text-xs text-muted">{{ $me->role_label }}</p></div>
-                <form method="post" action="{{ route('logout') }}">@csrf<button class="icon-btn size-9" aria-label="Sign out" title="Sign out"><x-lucide-log-out class="size-[18px]" aria-hidden="true" /></button></form>
+                <form method="post" action="{{ route('logout') }}">@csrf<button class="icon-btn size-9" aria-label="Sign out" title="Sign out"><x-lucide-log-out class="size-[1.125rem]" aria-hidden="true" /></button></form>
             </div>
         </div>
     </aside>
@@ -65,10 +65,10 @@
             </div>
         </header>
 
-        <main id="main" class="mx-auto max-w-[1400px] p-4 sm:p-6 lg:p-8">
+        <main id="main" class="mx-auto max-w-[87.5rem] p-4 sm:p-6 lg:p-8">
             @if ($errors->any())
                 <div class="mb-5 flex items-start gap-3 rounded-card bg-danger-soft p-4 text-sm text-danger" role="alert">
-                    <x-lucide-circle-alert class="mt-0.5 size-[18px] shrink-0" aria-hidden="true" />
+                    <x-lucide-circle-alert class="mt-0.5 size-[1.125rem] shrink-0" aria-hidden="true" />
                     <ul class="space-y-0.5">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
                 </div>
             @endif

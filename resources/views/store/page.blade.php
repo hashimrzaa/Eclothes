@@ -29,7 +29,7 @@
     <div class="container-page pt-8">
         <x-breadcrumbs :items="[$title => null]" />
 
-        <div class="mt-6 grid gap-10 lg:grid-cols-[220px_1fr]">
+        <div class="mt-6 grid gap-10 lg:grid-cols-[13.75rem_1fr]">
             <nav class="hidden lg:block" aria-label="Help pages">
                 <ul class="sticky top-36 space-y-1 text-sm">
                     @foreach ($pages as $slug => $label)
@@ -87,10 +87,10 @@
                                         @foreach ($items as $i => [$question, $answer])
                                             @php $id = Str::slug($group).'-'.$i; @endphp
                                             <div>
-                                                <button type="button" class="flex min-h-[56px] w-full items-center justify-between gap-4 px-5 text-left text-[15px] font-semibold" @click="open = open === '{{ $id }}' ? null : '{{ $id }}'" :aria-expanded="(open === '{{ $id }}').toString()" aria-controls="faq-{{ $id }}">
+                                                <button type="button" class="flex min-h-[3.5rem] w-full items-center justify-between gap-4 px-5 text-left text-[0.9375rem] font-semibold" @click="open = open === '{{ $id }}' ? null : '{{ $id }}'" :aria-expanded="(open === '{{ $id }}').toString()" aria-controls="faq-{{ $id }}">
                                                     {{ $question }}<x-lucide-chevron-down class="size-5 shrink-0 text-muted transition-transform" ::class="open === '{{ $id }}' && 'rotate-180'" aria-hidden="true" />
                                                 </button>
-                                                <div id="faq-{{ $id }}" x-show="open === '{{ $id }}'" x-collapse x-cloak><p class="px-5 pb-5 text-[15px] text-ink-2">{{ $answer }}</p></div>
+                                                <div id="faq-{{ $id }}" x-show="open === '{{ $id }}'" x-collapse x-cloak><p class="px-5 pb-5 text-[0.9375rem] text-ink-2">{{ $answer }}</p></div>
                                             </div>
                                         @endforeach
                                     </div>
@@ -194,7 +194,7 @@
                 @endswitch
 
                 @if (in_array($page, ['privacy', 'terms', 'returns', 'shipping'], true))
-                    <p class="mt-8 border-t border-line pt-5 text-[13px] text-muted">Questions about this page? <a href="{{ route('page', 'contact') }}" class="link">Contact us</a>.</p>
+                    <p class="mt-8 border-t border-line pt-5 text-[0.8125rem] text-muted">Questions about this page? <a href="{{ route('page', 'contact') }}" class="link">Contact us</a>.</p>
                 @endif
             </article>
         </div>

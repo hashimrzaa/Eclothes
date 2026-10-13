@@ -21,7 +21,7 @@
         @csrf
         @if ($product->exists) @method('put') @endif
 
-        <div class="grid gap-6 xl:grid-cols-[1fr_400px]">
+        <div class="grid gap-6 xl:grid-cols-[1fr_25rem]">
             <div class="space-y-6">
                 <section class="card space-y-4 p-5 sm:p-6">
                     <h2 class="text-base font-bold">Product details</h2>
@@ -93,7 +93,7 @@
                             <label class="flex min-h-11 items-start gap-3 text-sm">
                                 <input type="hidden" name="{{ $flag }}" value="0">
                                 <input type="checkbox" name="{{ $flag }}" value="1" class="mt-1 size-4" @checked(old($flag, $product->$flag))>
-                                <span><span class="font-medium">{{ $label }}</span><span class="block text-[13px] text-muted">{{ $help }}</span></span>
+                                <span><span class="font-medium">{{ $label }}</span><span class="block text-[0.8125rem] text-muted">{{ $help }}</span></span>
                             </label>
                         @endforeach
                     </div>
@@ -107,7 +107,7 @@
                         <x-field label="Wholesale cost (Rs.)" name="cost" type="number" required min="0" :value="$product->cost" x-model.number="cost" />
                         <div>
                             <p class="label">Margin</p>
-                            <p class="flex h-11 items-center rounded-control bg-sunken px-3 text-[15px] font-semibold tabular-nums" :class="margin < {{ config('store.low_margin_pct') }} && 'text-danger'">
+                            <p class="flex h-11 items-center rounded-control bg-sunken px-3 text-[0.9375rem] font-semibold tabular-nums" :class="margin < {{ config('store.low_margin_pct') }} && 'text-danger'">
                                 <span x-text="margin + '%'"></span><span class="ml-2 font-normal text-muted" x-text="'Rs. ' + (price - cost).toLocaleString()"></span>
                             </p>
                         </div>
@@ -125,7 +125,7 @@
                     <label class="flex items-start gap-3 rounded-control border border-line p-3 text-sm">
                         <input type="checkbox" name="stock_verified" value="1" class="mt-1 size-4">
                         <span><span class="font-medium">I confirmed this stock with the supplier just now</span>
-                            <span class="block text-[13px] text-muted">Last verified: {{ $product->stock_verified_at?->diffForHumans() ?? 'never' }}. Products are only shown as available for {{ config('store.stock_stale_hours') }} hours after verification.</span></span>
+                            <span class="block text-[0.8125rem] text-muted">Last verified: {{ $product->stock_verified_at?->diffForHumans() ?? 'never' }}. Products are only shown as available for {{ config('store.stock_stale_hours') }} hours after verification.</span></span>
                     </label>
                     <label class="flex min-h-9 items-center gap-3 text-sm"><input type="hidden" name="photo_permission" value="0"><input type="checkbox" name="photo_permission" value="1" class="size-4" @checked(old('photo_permission', $product->photo_permission))>Supplier allows use of their product photos</label>
                     <x-field label="Supplier notes" name="supplier_notes" rows="2" :value="$product->supplier_notes" />
@@ -142,7 +142,7 @@
         <form method="post" action="{{ route('admin.products.destroy', $product) }}" class="mt-8 border-t border-line pt-5" onsubmit="return confirm('Delete this product permanently? This cannot be undone.')">
             @csrf @method('delete')
             <button class="btn btn-danger btn-sm"><x-lucide-trash-2 class="size-4" aria-hidden="true" />Delete product</button>
-            <span class="ml-2 text-[13px] text-muted">To hide a product without losing its history, set the status to Paused instead.</span>
+            <span class="ml-2 text-[0.8125rem] text-muted">To hide a product without losing its history, set the status to Paused instead.</span>
         </form>
     @endif
 @endsection

@@ -30,7 +30,7 @@ class DashboardController extends Controller
             return ['label' => $day->format('j M'), 'short' => $day->format('j'), 'total' => (int) $rows->sum('total'), 'orders' => $rows->count()];
         });
 
-        $stale = now()->subHours(config('store.stock_stale_hours'));
+        $stale = Product::staleCutoff();
 
         return view('admin.dashboard', [
             'kpis' => [
@@ -43,7 +43,7 @@ class DashboardController extends Controller
             'maxDay' => max($days->max('total'), 1),
             'queue' => [
                 ['Orders awaiting confirmation', Order::where('status', 'pending')->count(), route('admin.orders.index', ['status' => 'pending']), 'phone-call', 'orders'],
-                ['Stock needs re-verification', Product::whereIn('status', Product::SELLABLE)->where(fn ($q) => $q->whereNull('stock_verified_at')->orWhere('stock_verified_at', '<', $stale))->count(), route('admin.stock.index', ['state' => 'stale']), 'clock-alert', 'stock'],
+                ['Stock needs re-verification', $stale ? Product::whereIn('status', Product::SELLABLE)->where(fn ($q) => $q->whereNull('stock_verified_at')->orWhere('stock_verified_at', '<', $stale))->count() : 0, route('admin.stock.index', ['state' => 'stale']), 'clock-alert', 'stock'],
                 ['Low stock products', Product::purchasable()->where('stock_qty', '<=', config('store.low_stock_at'))->count(), route('admin.stock.index', ['state' => 'low']), 'triangle-alert', 'stock'],
                 ['Open return requests', ReturnRequest::where('status', 'requested')->count(), route('admin.returns.index'), 'undo-2', 'returns'],
                 ['Reviews awaiting approval', Review::where('status', 'pending')->count(), route('admin.reviews.index', ['status' => 'pending']), 'star', 'reviews'],

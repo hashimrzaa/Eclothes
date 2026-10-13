@@ -12,10 +12,10 @@
                     <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                         <x-rating :value="$review->rating" size="size-4" />
                         <span class="badge badge-{{ ['pending' => 'warning', 'approved' => 'success', 'rejected' => 'neutral'][$review->status] }}">{{ ucfirst($review->status) }}</span>
-                        <span class="text-[13px] text-muted">{{ $review->created_at->format('j M Y') }}</span>
+                        <span class="text-[0.8125rem] text-muted">{{ $review->created_at->format('j M Y') }}</span>
                     </div>
-                    <p class="mt-2 text-[15px] text-ink-2">{{ $review->body }}</p>
-                    <p class="mt-2 text-[13px] text-muted"><span class="font-semibold text-ink">{{ $review->name }}</span>@if ($review->city) · {{ $review->city }}@endif · on <a href="{{ $review->product->url }}" target="_blank" rel="noopener" class="link">{{ $review->product->title }}</a></p>
+                    <p class="mt-2 text-[0.9375rem] text-ink-2">{{ $review->body }}</p>
+                    <p class="mt-2 text-[0.8125rem] text-muted"><span class="font-semibold text-ink">{{ $review->name }}</span>@if ($review->city) · {{ $review->city }}@endif · on <a href="{{ $review->product->url }}" target="_blank" rel="noopener" class="link">{{ $review->product->title }}</a></p>
                 </div>
                 <div class="flex shrink-0 flex-wrap gap-2">
                     @foreach (['approved' => ['Approve', 'btn-primary'], 'rejected' => ['Reject', 'btn-outline']] as $status => [$label, $class])

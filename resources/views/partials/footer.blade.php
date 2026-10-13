@@ -14,7 +14,7 @@
             <div class="mt-5 flex gap-2">
                 @foreach (config('store.socials') as $network => $url)
                     <a href="{{ $url }}" target="_blank" rel="noopener" class="grid size-10 place-items-center rounded-full border border-line text-ink-2 transition-colors hover:border-ink hover:text-ink" aria-label="{{ ucfirst($network) }}">
-                        <x-brand-icon :name="$network" class="size-[18px]" />
+                        <x-brand-icon :name="$network" class="size-[1.125rem]" />
                     </a>
                 @endforeach
             </div>
@@ -56,7 +56,7 @@
         <p class="display -mb-[0.16em] text-center text-[clamp(4rem,21vw,19rem)] leading-none text-ink/[0.06] select-none" data-parallax="-14">{{ config('store.name') }}</p>
     </div>
     <div class="border-t border-line">
-        <div class="container-page flex flex-col items-center justify-between gap-3 py-5 text-[13px] text-muted sm:flex-row">
+        <div class="container-page flex flex-col items-center justify-between gap-3 py-5 text-[0.8125rem] text-muted sm:flex-row">
             <p>© {{ date('Y') }} {{ config('store.name') }}. All rights reserved.</p>
             <p class="flex items-center gap-2"><x-lucide-banknote class="size-4" aria-hidden="true" />Cash on Delivery across Pakistan</p>
         </div>

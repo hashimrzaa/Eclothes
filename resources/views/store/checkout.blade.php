@@ -15,12 +15,12 @@
 
         @if ($errors->any())
             <div class="mt-5 flex items-start gap-3 rounded-card bg-danger-soft p-4 text-sm text-danger" role="alert">
-                <x-lucide-circle-alert class="mt-0.5 size-[18px] shrink-0" aria-hidden="true" />
+                <x-lucide-circle-alert class="mt-0.5 size-[1.125rem] shrink-0" aria-hidden="true" />
                 <p>{{ $errors->has('cart') ? $errors->first('cart') : 'Please correct the highlighted fields below to place your order.' }}</p>
             </div>
         @endif
 
-        <div class="mt-6 grid gap-8 lg:grid-cols-[1fr_400px]">
+        <div class="mt-6 grid gap-8 lg:grid-cols-[1fr_25rem]">
             <form id="checkout-form" method="post" action="{{ route('checkout.store') }}" class="space-y-5" data-once novalidate>
                 @csrf
 
@@ -57,7 +57,7 @@
 
                 <div class="hidden lg:block">
                     <button class="btn btn-primary btn-lg w-full">Place order — {{ money($totals['total']) }}</button>
-                    <p class="mt-3 text-center text-[13px] text-muted">By placing your order you agree to our <a href="{{ route('page', 'terms') }}" class="link">Terms</a> and <a href="{{ route('page', 'returns') }}" class="link">Returns policy</a>.</p>
+                    <p class="mt-3 text-center text-[0.8125rem] text-muted">By placing your order you agree to our <a href="{{ route('page', 'terms') }}" class="link">Terms</a> and <a href="{{ route('page', 'returns') }}" class="link">Returns policy</a>.</p>
                 </div>
             </form>
 
@@ -72,11 +72,11 @@
                             <li class="flex gap-3">
                                 <span class="relative aspect-[4/5] w-14 shrink-0 overflow-visible">
                                     <span class="block size-full overflow-hidden rounded-md bg-sunken"><x-product-image :product="$line->product" /></span>
-                                    <span class="absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full bg-ink text-[11px] font-bold text-white">{{ $line->qty }}</span>
+                                    <span class="absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full bg-ink text-[0.6875rem] font-bold text-white">{{ $line->qty }}</span>
                                 </span>
                                 <span class="min-w-0 flex-1 text-sm">
                                     <span class="line-clamp-2 font-medium">{{ $line->product->title }}</span>
-                                    <span class="text-[13px] text-muted">{{ collect([$line->colour, $line->size])->filter()->implode(' · ') }}</span>
+                                    <span class="text-[0.8125rem] text-muted">{{ collect([$line->colour, $line->size])->filter()->implode(' · ') }}</span>
                                 </span>
                                 <span class="shrink-0 text-sm font-semibold tabular-nums">{{ money($line->total) }}</span>
                             </li>
@@ -86,7 +86,7 @@
                     @include('partials.totals')
                     <button form="checkout-form" class="btn btn-primary btn-lg mt-5 w-full lg:hidden">Place order — {{ money($totals['total']) }}</button>
                 </div>
-                <ul class="mt-4 space-y-2 px-1 text-[13px] text-muted">
+                <ul class="mt-4 space-y-2 px-1 text-[0.8125rem] text-muted">
                     <li class="flex items-center gap-2"><x-lucide-phone-call class="size-4" aria-hidden="true" />We confirm your order by phone or WhatsApp before dispatch</li>
                     <li class="flex items-center gap-2"><x-lucide-refresh-ccw class="size-4" aria-hidden="true" />7-day easy exchange</li>
                 </ul>

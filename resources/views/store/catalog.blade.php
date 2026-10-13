@@ -22,7 +22,7 @@
                 <p class="mt-1 text-sm text-muted" aria-live="polite">{{ number_format($products->total()) }} {{ Str::plural('product', $products->total()) }}</p>
             </div>
             @if ($category?->is_restricted)
-                <p class="flex items-center gap-2 text-[13px] text-muted"><x-lucide-package class="size-4" aria-hidden="true" />Delivered in plain, discreet packaging</p>
+                <p class="flex items-center gap-2 text-[0.8125rem] text-muted"><x-lucide-package class="size-4" aria-hidden="true" />Delivered in plain, discreet packaging</p>
             @endif
         </header>
 
@@ -46,7 +46,7 @@
             </nav>
         @endif
 
-        <div class="mt-6 grid gap-8 lg:grid-cols-[250px_1fr]">
+        <div class="mt-6 grid gap-8 lg:grid-cols-[15.625rem_1fr]">
             {{-- Filters: sidebar on desktop, bottom sheet on mobile --}}
             <aside class="hidden lg:block" aria-label="Filters">
                 <form method="get" action="{{ url()->current() }}" class="sticky top-36" x-data @change="$el.requestSubmit()">
@@ -58,7 +58,7 @@
                 <div class="flex items-center justify-between gap-3 border-b border-line pb-4">
                     <button type="button" class="btn btn-outline btn-sm lg:hidden" @click="filters = true">
                         <x-lucide-sliders-horizontal class="size-4" aria-hidden="true" />Filters
-                        @if ($activeCount)<span class="grid size-5 place-items-center rounded-full bg-primary text-[11px] text-white">{{ $activeCount }}</span>@endif
+                        @if ($activeCount)<span class="grid size-5 place-items-center rounded-full bg-primary text-[0.6875rem] text-white">{{ $activeCount }}</span>@endif
                     </button>
                     <p class="hidden text-sm text-muted lg:block">
                         @if ($activeCount)

@@ -55,8 +55,9 @@ class StoreTest extends TestCase
 
     public function test_product_with_unverified_supplier_stock_cannot_be_ordered(): void
     {
+        config(['store.stock_stale_hours' => 72]);
         $product = $this->sellable();
-        $product->update(['stock_verified_at' => now()->subHours(config('store.stock_stale_hours') + 1)]);
+        $product->update(['stock_verified_at' => now()->subHours(73)]);
 
         $this->assertSame('unconfirmed', $product->fresh()->availability);
         $this->get($product->url)->assertOk()->assertDontSee('Add to Cart')->assertSee('Availability being confirmed');
@@ -119,8 +120,9 @@ class StoreTest extends TestCase
     public function test_order_must_be_confirmed_by_phone_or_whatsapp_before_it_moves_on(): void
     {
         $owner = User::where('role', 'owner')->first();
-        $order = Order::where('status', 'pending')->firstOrFail();
-        $order->update(['confirmed_via' => null]);
+        // Seeded statuses are random, so put one order into the state under test.
+        $order = Order::firstOrFail();
+        $order->update(['status' => 'pending', 'confirmed_via' => null]);
 
         $this->actingAs($owner)->patch('/admin/orders/'.$order->id, ['status' => 'confirmed'])->assertSessionHasErrors('confirmed_via');
         $this->assertSame('pending', $order->fresh()->status);

@@ -36,7 +36,7 @@
     <section class="card mt-6 overflow-hidden">
         <div class="border-b border-line px-5 py-4">
             <h2 class="text-base font-bold">Role permissions</h2>
-            <p class="mt-0.5 text-[13px] text-muted">Choose which admin sections each role can open. Owners always have full access.</p>
+            <p class="mt-0.5 text-[0.8125rem] text-muted">Choose which admin sections each role can open. Owners always have full access.</p>
         </div>
         <form method="post" action="{{ route('admin.staff.permissions') }}" data-once>
             @csrf @method('put')
@@ -50,7 +50,7 @@
                                 <td class="text-center"><x-lucide-check class="mx-auto size-4 text-success" aria-label="Always allowed" /></td>
                                 @foreach ($editable as $role => $roleLabel)
                                     <td class="text-center">
-                                        <input type="checkbox" name="perm[{{ $role }}][]" value="{{ $key }}" class="size-[18px]" @checked(($matrix[$role] ?? collect())->contains($key)) aria-label="{{ $roleLabel }} can access {{ $label }}">
+                                        <input type="checkbox" name="perm[{{ $role }}][]" value="{{ $key }}" class="size-[1.125rem]" @checked(($matrix[$role] ?? collect())->contains($key)) aria-label="{{ $roleLabel }} can access {{ $label }}">
                                     </td>
                                 @endforeach
                             </tr>
@@ -70,7 +70,7 @@
                 @if ($member) @method('put') @endif
                 <x-field label="Full name" name="name" id="st-name-{{ $mid }}" required :value="$member?->name" />
                 @if ($member)
-                    <div><p class="label">Email</p><p class="flex h-11 items-center rounded-control bg-sunken px-3 text-[15px] text-muted">{{ $member->email }}</p></div>
+                    <div><p class="label">Email</p><p class="flex h-11 items-center rounded-control bg-sunken px-3 text-[0.9375rem] text-muted">{{ $member->email }}</p></div>
                 @else
                     <x-field label="Email" name="email" id="st-email-{{ $mid }}" type="email" required />
                 @endif

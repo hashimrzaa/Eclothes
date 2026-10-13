@@ -16,12 +16,12 @@
 
             <h1 class="mt-8 text-2xl font-extrabold sm:text-3xl">Your Cart <span class="text-lg font-semibold text-muted">({{ $lines->sum('qty') }} {{ Str::plural('item', $lines->sum('qty')) }})</span></h1>
 
-            <div class="mt-6 grid gap-8 lg:grid-cols-[1fr_380px]">
+            <div class="mt-6 grid gap-8 lg:grid-cols-[1fr_23.75rem]">
                 <div>
                     {{-- Free delivery progress --}}
                     <div class="card mb-4 p-4">
                         @if ($totals['shipping'] === 0)
-                            <p class="flex items-center gap-2 text-sm font-semibold text-success"><x-lucide-party-popper class="size-[18px]" aria-hidden="true" />You have unlocked free delivery.</p>
+                            <p class="flex items-center gap-2 text-sm font-semibold text-success"><x-lucide-party-popper class="size-[1.125rem]" aria-hidden="true" />You have unlocked free delivery.</p>
                         @else
                             <p class="text-sm">Add <strong>{{ money($totals['to_free']) }}</strong> more for <strong>free delivery</strong>.</p>
                         @endif
@@ -31,7 +31,7 @@
                     </div>
 
                     @error('cart')
-                        <div class="mb-4 flex items-start gap-3 rounded-card bg-danger-soft p-4 text-sm text-danger" role="alert"><x-lucide-circle-alert class="mt-0.5 size-[18px] shrink-0" aria-hidden="true" />{{ $message }}</div>
+                        <div class="mb-4 flex items-start gap-3 rounded-card bg-danger-soft p-4 text-sm text-danger" role="alert"><x-lucide-circle-alert class="mt-0.5 size-[1.125rem] shrink-0" aria-hidden="true" />{{ $message }}</div>
                     @enderror
 
                     <ul class="card divide-y divide-line">
@@ -41,13 +41,13 @@
                                 <div class="flex min-w-0 flex-1 flex-col">
                                     <div class="flex items-start justify-between gap-3">
                                         <div class="min-w-0">
-                                            <a href="{{ $line->product->url }}" class="line-clamp-2 text-[15px] font-medium hover:text-primary">{{ $line->product->title }}</a>
-                                            <p class="mt-0.5 text-[13px] text-muted">{{ collect([$line->colour, $line->size ? 'Size '.$line->size : null])->filter()->implode(' · ') ?: 'SKU '.$line->product->sku }}</p>
+                                            <a href="{{ $line->product->url }}" class="line-clamp-2 text-[0.9375rem] font-medium hover:text-primary">{{ $line->product->title }}</a>
+                                            <p class="mt-0.5 text-[0.8125rem] text-muted">{{ collect([$line->colour, $line->size ? 'Size '.$line->size : null])->filter()->implode(' · ') ?: 'SKU '.$line->product->sku }}</p>
                                         </div>
-                                        <p class="shrink-0 text-[15px] font-bold">{{ money($line->total) }}</p>
+                                        <p class="shrink-0 text-[0.9375rem] font-bold">{{ money($line->total) }}</p>
                                     </div>
                                     @unless ($line->ok)
-                                        <p class="mt-2 flex items-center gap-1.5 text-[13px] font-semibold text-danger"><x-lucide-circle-alert class="size-4" aria-hidden="true" />{{ $line->problem }} — please update or remove</p>
+                                        <p class="mt-2 flex items-center gap-1.5 text-[0.8125rem] font-semibold text-danger"><x-lucide-circle-alert class="size-4" aria-hidden="true" />{{ $line->problem }} — please update or remove</p>
                                     @endunless
                                     <div class="mt-auto flex items-center justify-between gap-3 pt-3">
                                         <form method="post" action="{{ route('cart.update', $line->key) }}" class="flex h-10 items-center rounded-control border border-line-strong">
@@ -75,11 +75,11 @@
                         @include('partials.totals')
                         @if ($lines->contains('ok', false))
                             <p class="btn btn-primary btn-lg mt-5 w-full opacity-50" aria-disabled="true">Proceed to checkout</p>
-                            <p class="mt-2 text-center text-[13px] text-danger">Fix the highlighted items to continue.</p>
+                            <p class="mt-2 text-center text-[0.8125rem] text-danger">Fix the highlighted items to continue.</p>
                         @else
                             <a href="{{ route('checkout') }}" class="btn btn-primary btn-lg mt-5 w-full">Proceed to checkout<x-lucide-arrow-right class="size-5" aria-hidden="true" /></a>
                         @endif
-                        <p class="mt-4 flex items-center justify-center gap-2 text-[13px] text-muted"><x-lucide-banknote class="size-4" aria-hidden="true" />Pay with Cash on Delivery</p>
+                        <p class="mt-4 flex items-center justify-center gap-2 text-[0.8125rem] text-muted"><x-lucide-banknote class="size-4" aria-hidden="true" />Pay with Cash on Delivery</p>
                     </div>
                 </aside>
             </div>
