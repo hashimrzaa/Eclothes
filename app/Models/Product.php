@@ -30,7 +30,22 @@ class Product extends Model
                 $product->slug = Str::slug($product->title).'-'.Str::lower(Str::random(4));
             }
         });
-        static::saved(fn (Product $product) => $product->syncAttributes());
+        static::saved(function (Product $product) {
+            $product->syncAttributes();
+            self::flushCatalog();
+        });
+        static::deleted(fn () => self::flushCatalog());
+    }
+
+    /** Cached storefront data (homepage, announcements) is keyed by this version. */
+    public static function catalogVersion(): string
+    {
+        return (string) \Illuminate\Support\Facades\Cache::get('catalog.version', '0');
+    }
+
+    public static function flushCatalog(): void
+    {
+        \Illuminate\Support\Facades\Cache::forever('catalog.version', (string) microtime(true));
     }
 
     public function category()

@@ -47,7 +47,7 @@ class AppServiceProvider extends ServiceProvider
                 'trendingSearches' => Cache::remember('search.trending', 1800, fn () => Product::general()->orderByDesc('sold_count')
                     ->limit(40)->with('category')->get()->pluck('category.name')->unique()->take(8)->values()->all()),
                 'wishlistCount' => count(session('wishlist', [])),
-                'announcements' => Banner::where('placement', 'announcement')->where('is_active', true)->orderBy('position')->pluck('title'),
+                'announcements' => Cache::remember('announcements.'.Product::catalogVersion(), 600, fn () => Banner::where('placement', 'announcement')->where('is_active', true)->orderBy('position')->pluck('title')),
             ]);
         });
     }

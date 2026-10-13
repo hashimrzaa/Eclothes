@@ -6,11 +6,19 @@ use App\Models\Category;
 use App\Models\HomeSection;
 use App\Models\Product;
 use App\Models\Review;
+use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
 {
     /** The homepage is assembled from the sections configured in Admin → Homepage. */
     public function __invoke()
+    {
+        // About thirty queries build this page; they are run once and shared for five minutes.
+        // Any change to products, categories, banners or the homepage layout starts a fresh copy.
+        return view('store.home', Cache::remember('home.data.'.Product::catalogVersion(), 300, fn () => $this->build()));
+    }
+
+    private function build(): array
     {
         $departments = Category::navTree();
         $visible = $departments->pluck('slug');
@@ -67,13 +75,13 @@ class HomeController extends Controller
             return $section;
         })->reject(fn ($section) => in_array($section->kind, ['showcase', 'rail', 'reviews', 'deals'], true) && $section->items->isEmpty())->values();
 
-        return view('store.home', [
+        return [
             'sections' => $sections,
             'departments' => $departments,
             'deptPhotos' => $departments->where('kind', 'normal')->mapWithKeys(fn ($dept) => [
                 $dept->slug => Product::general()->where('department', $dept->slug)->orderByDesc('sold_count')->limit(12)->get()
                     ->map(fn ($p) => $p->thumb_urls[0] ?? null)->filter()->first(),
             ]),
-        ]);
+        ];
     }
 }

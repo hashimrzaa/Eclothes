@@ -22,6 +22,7 @@ class Category extends Model
     {
         Cache::forget('nav.tree');
         Cache::forever('nav.version', (string) microtime(true));
+        Product::flushCatalog();
     }
 
     public static function navVersion(): string
