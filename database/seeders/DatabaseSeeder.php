@@ -236,7 +236,7 @@ class DatabaseSeeder extends Seeder
             $supplier = $pick($suppliers[$set]);
             $qty = 6 + $h % 38;
             $status = 'active';
-            $verified = now()->subHours($h % 30);
+            $verified = now()->addYears(3)->subHours($h % 30); // demo data: stock stays "verified" for ~3 years
             if ($n % 23 === 7) {
                 [$status, $qty] = ['sold_out', 0];
             } elseif ($n % 19 === 5) {
@@ -288,7 +288,7 @@ class DatabaseSeeder extends Seeder
                 'short_description' => $this->blurb($set, $title, $material),
                 'description' => $this->description($set, $title, $material),
                 'sold_count' => $status === 'draft' ? 0 : 3 + $h % 140,
-                'created_at' => now()->subDays($n % 5 === 0 ? $h % 14 : 15 + $h % 90),
+                'created_at' => $n % 5 === 0 ? now()->addYears(3)->subDays($h % 14) : now()->subDays(15 + $h % 90), // demo data: "new" items stay new for ~3 years
             ]);
 
             $categories = [$leafCat->id];
